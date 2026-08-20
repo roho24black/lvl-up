@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="LVL UP">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="manifest" href="manifest.json">
+<title>LVL UP — геймификация целей</title>
+<style>
+  :root{
+    --bg:#0a0a0a;
+    --bg2:#141414;
+    --card:#1a1a1a;
+    --card-border:#2a2a2a;
+    --gold:#f5c518;
+    --gold2:#ffdd55;
+    --text:#f5f5f0;
+    --text-dim:#8a8a85;
+    --green:#3ddc84;
+    --red:#ff5b5b;
+    --radius:18px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Segoe UI,Roboto,sans-serif;
+    min-height:100vh;
+    padding-bottom:calc(90px + env(safe-area-inset-bottom));
+    padding-top:env(safe-area-inset-top);
+    overscroll-behavior-y:none;
+  }
+  .wrap{max-width:480px;margin:0 auto;padding:18px 16px 0;}
+
+  /* HEADER */
+  .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:20px;letter-spacing:-0.02em;}
+  .brand .bolt{color:var(--gold);}
+  .streak{display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--card-border);padding:8px 12px;border-radius:999px;font-weight:700;font-size:14px;}
+
+  /* LEVEL CARD */
+  .level-card{
+    background:linear-gradient(145deg,#1c1a10,#141414);
+    border:1px solid #3a2f0f;
+    border-radius:var(--radius);
+    padding:20px;
+    margin-bottom:16px;
+    position:relative;
+    overflow:hidden;
+  }
+  .level-card::before{
+    content:"";position:absolute;top:-40%;right:-20%;width:220px;height:220px;
+    background:radial-gradient(circle,rgba(245,197,24,0.18),transparent 70%);
+    pointer-events:none;
+  }
+  .level-top{display:flex;justify-content:space-between;align-items:flex-start;}
+  .level-badge{
+    width:56px;height:56px;border-radius:16px;
+    background:linear-gradient(145deg,var(--gold2),var(--gold));
+    display:flex;align-items:center;justify-content:center;
+    font-weight:900;font-size:20px;color:#1a1400;
+    box-shadow:0 6px 18px rgba(245,197,24,0.25);
+    flex-shrink:0;
+  }
+  .level-info{margin-left:14px;flex:1;}
+  .level-name{font-size:13px;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:0.06em;}
+  .level-title{font-size:19px;font-weight:800;margin-top:2px;}
+  .level-top{display:flex;}
+  .xp-num{font-size:13px;color:var(--text-dim);font-weight:600;text-align:right;white-space:nowrap;}
+  .xp-track{
+    margin-top:16px;height:10px;border-radius:999px;background:#2a2510;overflow:hidden;
+    border:1px solid #3a3316;
+  }
+  .xp-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--gold),var(--gold2));transition:width .5s cubic-bezier(.34,1.56,.64,1);}
+
+  /* STATS ROW */
+  .stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px;}
+  .stat-box{background:var(--card);border:1px solid var(--card-border);border-radius:14px;padding:12px 8px;text-align:center;}
+  .stat-val{font-size:20px;font-weight:800;}
+  .stat-lbl{font-size:11px;color:var(--text-dim);margin-top:2px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
+
+  /* SECTION HEADER */
+  .section-head{display:flex;justify-content:space-between;align-items:center;margin:22px 0 10px;}
+  .section-title{font-size:16px;font-weight:800;}
+  .section-sub{font-size:12px;color:var(--text-dim);font-weight:600;}
+
+  /* QUEST LIST */
+  .quest{
+    display:flex;align-items:center;gap:12px;
+    background:var(--card);border:1px solid var(--card-border);border-radius:14px;
+    padding:14px;margin-bottom:10px;transition:transform .15s, opacity .3s;
+  }
+  .quest.done{opacity:.45;}
+  .quest.done .quest-title{text-decoration:line-through;}
+  .check{
+    width:26px;height:26px;border-radius:8px;border:2px solid #3a3a3a;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-weight:900;color:transparent;
+    transition:all .2s;
+  }
+  .quest.done .check{background:var(--green);border-color:var(--green);color:#06210f;}
+  .quest-body{flex:1;min-width:0;}
+  .quest-title{font-size:15px;font-weight:700;}
+  .quest-meta{font-size:11px;color:var(--text-dim);margin-top:2px;font-weight:600;}
+  .quest-xp{
+    font-size:12px;font-weight:800;color:var(--gold);background:rgba(245,197,24,0.1);
+    padding:5px 9px;border-radius:8px;flex-shrink:0;white-space:nowrap;
+  }
+  .quest-del{color:var(--text-dim);font-size:18px;padding:4px 6px;flex-shrink:0;}
+  .empty{
+    text-align:center;color:var(--text-dim);font-size:13px;padding:30px 10px;
+    border:1px dashed var(--card-border);border-radius:14px;
+  }
+
+  /* ACHIEVEMENTS */
+  .ach-scroll{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;margin:0 -16px;padding-left:16px;padding-right:16px;}
+  .ach-scroll::-webkit-scrollbar{display:none;}
+  .ach{
+    flex-shrink:0;width:84px;text-align:center;background:var(--card);border:1px solid var(--card-border);
+    border-radius:14px;padding:12px 6px;opacity:.4;
+  }
+  .ach.unlocked{opacity:1;border-color:#3a2f0f;background:linear-gradient(160deg,#1c1a10,#141414);}
+  .ach-emoji{font-size:26px;}
+  .ach-name{font-size:10px;font-weight:700;margin-top:6px;color:var(--text-dim);}
+  .ach.unlocked .ach-name{color:var(--text);}
+
+  /* ADD BUTTON (FAB + bar) */
+  .add-bar{
+    position:fixed;bottom:0;left:0;right:0;
+    padding:12px 16px calc(14px + env(safe-area-inset-bottom));
+    background:linear-gradient(180deg,transparent,var(--bg) 30%);
+  }
+  .add-btn{
+    max-width:448px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:8px;
+    background:var(--gold);color:#1a1400;font-weight:800;font-size:15px;
+    border:none;border-radius:14px;padding:15px;width:100%;
+  }
+  .add-btn:active{transform:scale(0.98);}
+
+  /* MODAL */
+  .overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);
+    display:none;align-items:flex-end;z-index:50;
+  }
+  .overlay.show{display:flex;}
+  .sheet{
+    background:var(--bg2);border-radius:22px 22px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom));
+    width:100%;max-width:480px;margin:0 auto;border-top:1px solid var(--card-border);
+  }
+  .sheet h3{margin:0 0 14px;font-size:18px;font-weight:800;}
+  .field-label{font-size:12px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.04em;margin:14px 0 6px;}
+  input[type=text]{
+    width:100%;background:var(--card);border:1px solid var(--card-border);border-radius:12px;
+    padding:13px 14px;color:var(--text);font-size:15px;font-weight:600;
+  }
+  input[type=text]:focus{outline:none;border-color:var(--gold);}
+  .xp-pick{display:flex;gap:8px;}
+  .xp-pick button{
+    flex:1;padding:12px 0;border-radius:12px;border:1px solid var(--card-border);background:var(--card);
+    color:var(--text);font-weight:800;font-size:14px;
+  }
+  .xp-pick button.sel{background:var(--gold);color:#1a1400;border-color:var(--gold);}
+  .freq-pick{display:flex;gap:8px;}
+  .freq-pick button{
+    flex:1;padding:12px 0;border-radius:12px;border:1px solid var(--card-border);background:var(--card);
+    color:var(--text);font-weight:700;font-size:13px;
+  }
+  .freq-pick button.sel{background:#2a2510;color:var(--gold);border-color:var(--gold);}
+  .sheet-actions{display:flex;gap:10px;margin-top:20px;}
+  .btn-cancel{flex:1;padding:14px;border-radius:12px;border:1px solid var(--card-border);background:transparent;color:var(--text-dim);font-weight:700;}
+  .btn-save{flex:2;padding:14px;border-radius:12px;border:none;background:var(--gold);color:#1a1400;font-weight:800;font-size:15px;}
+
+  /* LEVEL UP TOAST */
+  .toast{
+    position:fixed;top:calc(20px + env(safe-area-inset-top));left:50%;transform:translateX(-50%) translateY(-120%);
+    background:linear-gradient(145deg,var(--gold2),var(--gold));color:#1a1400;font-weight:800;font-size:14px;
+    padding:12px 20px;border-radius:14px;box-shadow:0 10px 30px rgba(245,197,24,0.35);z-index:100;
+    transition:transform .4s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;
+  }
+  .toast.show{transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">
+      <div class="brand"><span class="bolt">⚡</span>LVL UP</div>
+      <div class="streak">🔥 <span id="streakNum">0</span></div>
+    </div>
+
+    <div class="level-card">
+      <div class="level-top">
+        <div class="level-badge" id="levelBadge">1</div>
+        <div class="level-info">
+          <div class="level-name">Уровень</div>
+          <div class="level-title" id="levelTitle">Новичок</div>
+        </div>
+        <div class="xp-num"><span id="xpCur">0</span>/<span id="xpNeed">100</span> XP</div>
+      </div>
+      <div class="xp-track"><div class="xp-fill" id="xpFill" style="width:0%"></div></div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-box"><div class="stat-val" id="statDone">0</div><div class="stat-lbl">Сделано</div></div>
+      <div class="stat-box"><div class="stat-val" id="statXp">0</div><div class="stat-lbl">Всего XP</div></div>
+      <div class="stat-box"><div class="stat-val" id="statBest">0</div><div class="stat-lbl">Рекорд стрик</div></div>
+    </div>
+
+    <div class="section-head">
+      <div class="section-title">Квесты на сегодня</div>
+      <div class="section-sub" id="questCount"></div>
+    </div>
+    <div id="questList"></div>
+
+    <div class="section-head">
+      <div class="section-title">Ачивки</div>
+    </div>
+    <div class="ach-scroll" id="achList"></div>
+  </div>
+
+  <div class="add-bar">
+    <button class="add-btn" id="openAdd">＋ Новый квест</button>
+  </div>
+
+  <div class="overlay" id="overlay">
+    <div class="sheet">
+      <h3>Новый квест</h3>
+      <input type="text" id="questInput" placeholder="Например: 20 отжиманий" maxlength="60">
+      <div class="field-label">Сложность (XP)</div>
+      <div class="xp-pick" id="xpPick">
+        <button data-xp="10">10</button>
+        <button data-xp="20" class="sel">20</button>
+        <button data-xp="35">35</button>
+        <button data-xp="50">50</button>
+      </div>
+      <div class="field-label">Повтор</div>
+      <div class="freq-pick" id="freqPick">
+        <button data-freq="daily" class="sel">Каждый день</button>
+        <button data-freq="once">Разово</button>
+      </div>
+      <div class="sheet-actions">
+        <button class="btn-cancel" id="cancelAdd">Отмена</button>
+        <button class="btn-save" id="saveQuest">Добавить</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  var STORE_KEY = "lvlup_state_v1";
+
+  var LEVEL_TITLES = ["Новичок","Стажёр","Боец","Атлет","Воин","Чемпион","Мастер","Легенда","Герой","Титан"];
+  var ACHIEVEMENTS = [
+    {id:"first",   emoji:"🎯", name:"Первый шаг", test:function(s){return s.totalDone>=1;}},
+    {id:"streak3", emoji:"🔥", name:"3 дня подряд", test:function(s){return s.bestStreak>=3;}},
+    {id:"streak7", emoji:"🌟", name:"Неделя огня", test:function(s){return s.bestStreak>=7;}},
+    {id:"done10",  emoji:"✅", name:"10 квестов", test:function(s){return s.totalDone>=10;}},
+    {id:"done50",  emoji:"🏆", name:"50 квестов", test:function(s){return s.totalDone>=50;}},
+    {id:"lvl5",    emoji:"💪", name:"5 уровень", test:function(s){return s.level>=5;}},
+    {id:"xp500",   emoji:"💰", name:"500 XP", test:function(s){return s.totalXp>=500;}},
+    {id:"streak30",emoji:"👑", name:"Месяц дисциплины", test:function(s){return s.bestStreak>=30;}}
+  ];
+
+  function todayKey(){
+    var d = new Date();
+    return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();
+  }
+  function yesterdayKey(){
+    var d = new Date(); d.setDate(d.getDate()-1);
+    return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();
+  }
+
+  function defaultState(){
+    return {
+      quests: [
+        {id:cryptoId(), title:"Заправить кровать", xp:10, freq:"daily", doneDate:null},
+        {id:cryptoId(), title:"20 минут спорта", xp:35, freq:"daily", doneDate:null},
+        {id:cryptoId(), title:"Прочитать 10 страниц", xp:20, freq:"daily", doneDate:null}
+      ],
+      totalXp:0, totalDone:0, streak:0, bestStreak:0,
+      lastCompleteDate:null, unlocked:[]
+    };
+  }
+  function cryptoId(){ return Math.random().toString(36).slice(2)+Date.now().toString(36); }
+
+  function load(){
+    try{
+      var raw = localStorage.getItem(STORE_KEY);
+      if(!raw) return defaultState();
+      var s = JSON.parse(raw);
+      if(!s.quests) return defaultState();
+      return s;
+    }catch(e){ return defaultState(); }
+  }
+  function save(){ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+
+  var state = load();
+
+  // reset daily quests if date changed
+  (function rollDaily(){
+    var tk = todayKey();
+    state.quests.forEach(function(q){
+      if(q.freq==="daily" && q.doneDate && q.doneDate!==tk){
+        q.doneDate = null;
+      }
+    });
+    save();
+  })();
+
+  function xpForLevel(lvl){ return lvl*100; } // xp needed to go from lvl -> lvl+1
+  function computeLevel(totalXp){
+    var lvl=1, remaining=totalXp;
+    while(remaining >= xpForLevel(lvl)){
+      remaining -= xpForLevel(lvl);
+      lvl++;
+    }
+    return {level:lvl, cur:remaining, need:xpForLevel(lvl)};
+  }
+
+  function render(){
+    var lv = computeLevel(state.totalXp);
+    document.getElementById("levelBadge").textContent = lv.level;
+    document.getElementById("levelTitle").textContent = LEVEL_TITLES[Math.min(lv.level-1, LEVEL_TITLES.length-1)];
+    document.getElementById("xpCur").textContent = lv.cur;
+    document.getElementById("xpNeed").textContent = lv.need;
+    document.getElementById("xpFill").style.width = Math.round((lv.cur/lv.need)*100)+"%";
+    document.getElementById("streakNum").textContent = state.streak;
+    document.getElementById("statDone").textContent = state.totalDone;
+    document.getElementById("statXp").textContent = state.totalXp;
+    document.getElementById("statBest").textContent = state.bestStreak;
+
+    var tk = todayKey();
+    var list = document.getElementById("questList");
+    list.innerHTML = "";
+    var visible = state.quests;
+    document.getElementById("questCount").textContent =
+      visible.filter(function(q){return q.doneDate===tk;}).length + "/" + visible.length;
+
+    if(visible.length===0){
+      list.innerHTML = '<div class="empty">Квестов пока нет — добавь первый ⬇</div>';
+    }
+    visible.forEach(function(q){
+      var done = q.doneDate === tk;
+      var el = document.createElement("div");
+      el.className = "quest"+(done?" done":"");
+      el.innerHTML =
+        '<div class="check">'+(done?"✓":"")+'</div>'+
+        '<div class="quest-body"><div class="quest-title"></div><div class="quest-meta">'+(q.freq==="daily"?"Ежедневно":"Разово")+'</div></div>'+
+        '<div class="quest-xp">+'+q.xp+' XP</div>'+
+        '<div class="quest-del">✕</div>';
+      el.querySelector(".quest-title").textContent = q.title;
+      el.querySelector(".check").addEventListener("click", function(){ toggleQuest(q); });
+      el.querySelector(".quest-body").addEventListener("click", function(){ toggleQuest(q); });
+      el.querySelector(".quest-del").addEventListener("click", function(ev){
+        ev.stopPropagation();
+        state.quests = state.quests.filter(function(x){return x.id!==q.id;});
+        save(); render();
+      });
+      list.appendChild(el);
+    });
+
+    var achWrap = document.getElementById("achList");
+    achWrap.innerHTML = "";
+    ACHIEVEMENTS.forEach(function(a){
+      var un = state.unlocked.indexOf(a.id)!==-1;
+      var el = document.createElement("div");
+      el.className = "ach"+(un?" unlocked":"");
+      el.innerHTML = '<div class="ach-emoji">'+a.emoji+'</div><div class="ach-name">'+a.name+'</div>';
+      achWrap.appendChild(el);
+    });
+  }
+
+  function checkAchievements(){
+    ACHIEVEMENTS.forEach(function(a){
+      if(state.unlocked.indexOf(a.id)===-1 && a.test(state)){
+        state.unlocked.push(a.id);
+        showToast("🏅 Ачивка: "+a.name);
+      }
+    });
+  }
+
+  function updateStreak(){
+    var tk = todayKey(), yk = yesterdayKey();
+    if(state.lastCompleteDate === tk) return; // already counted today
+    if(state.lastCompleteDate === yk){
+      state.streak += 1;
+    } else {
+      state.streak = 1;
+    }
+    state.lastCompleteDate = tk;
+    if(state.streak > state.bestStreak) state.bestStreak = state.streak;
+  }
+
+  var toastTimer;
+  function showToast(msg){
+    var t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ t.classList.remove("show"); }, 2200);
+  }
+
+  function toggleQuest(q){
+    var tk = todayKey();
+    var wasDone = q.doneDate === tk;
+    if(wasDone){
+      q.doneDate = null;
+      state.totalXp = Math.max(0, state.totalXp - q.xp);
+      state.totalDone = Math.max(0, state.totalDone - 1);
+    } else {
+      var prevLevel = computeLevel(state.totalXp).level;
+      q.doneDate = tk;
+      state.totalXp += q.xp;
+      state.totalDone += 1;
+      updateStreak();
+      var newLevel = computeLevel(state.totalXp).level;
+      if(newLevel > prevLevel){
+        showToast("⚡ Новый уровень: "+newLevel+"!");
+      } else {
+        showToast("+"+q.xp+" XP");
+      }
+      checkAchievements();
+    }
+    save();
+    render();
+  }
+
+  // ADD QUEST MODAL
+  var overlay = document.getElementById("overlay");
+  var pickedXp = 20, pickedFreq = "daily";
+
+  document.getElementById("openAdd").addEventListener("click", function(){
+    document.getElementById("questInput").value = "";
+    overlay.classList.add("show");
+  });
+  document.getElementById("cancelAdd").addEventListener("click", function(){
+    overlay.classList.remove("show");
+  });
+  overlay.addEventListener("click", function(e){
+    if(e.target === overlay) overlay.classList.remove("show");
+  });
+  document.querySelectorAll("#xpPick button").forEach(function(b){
+    b.addEventListener("click", function(){
+      document.querySelectorAll("#xpPick button").forEach(function(x){x.classList.remove("sel");});
+      b.classList.add("sel");
+      pickedXp = parseInt(b.dataset.xp, 10);
+    });
+  });
+  document.querySelectorAll("#freqPick button").forEach(function(b){
+    b.addEventListener("click", function(){
+      document.querySelectorAll("#freqPick button").forEach(function(x){x.classList.remove("sel");});
+      b.classList.add("sel");
+      pickedFreq = b.dataset.freq;
+    });
+  });
+  document.getElementById("saveQuest").addEventListener("click", function(){
+    var title = document.getElementById("questInput").value.trim();
+    if(!title) return;
+    state.quests.push({id:cryptoId(), title:title, xp:pickedXp, freq:pickedFreq, doneDate:null});
+    save();
+    render();
+    overlay.classList.remove("show");
+  });
+
+  render();
+
+  if("serviceWorker" in navigator){
+    window.addEventListener("load", function(){
+      navigator.serviceWorker.register("sw.js").catch(function(){});
+    });
+  }
+})();
+</script>
+</body>
+</html>
