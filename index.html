@@ -2,477 +2,690 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
-<meta name="theme-color" content="#0a0a0a">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="LVL UP">
-<link rel="apple-touch-icon" href="icon.png">
-<link rel="manifest" href="manifest.json">
-<title>LVL UP — геймификация целей</title>
+<title>LVL UP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg:#0a0a0a;
-    --bg2:#141414;
-    --card:#1a1a1a;
-    --card-border:#2a2a2a;
-    --gold:#f5c518;
-    --gold2:#ffdd55;
-    --text:#f5f5f0;
-    --text-dim:#8a8a85;
-    --green:#3ddc84;
-    --red:#ff5b5b;
-    --radius:18px;
-  }
-  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);}
-  body{
-    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Segoe UI,Roboto,sans-serif;
-    min-height:100vh;
-    padding-bottom:calc(90px + env(safe-area-inset-bottom));
-    padding-top:env(safe-area-inset-top);
-    overscroll-behavior-y:none;
-  }
-  .wrap{max-width:480px;margin:0 auto;padding:18px 16px 0;}
-
-  /* HEADER */
-  .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
-  .brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:20px;letter-spacing:-0.02em;}
-  .brand .bolt{color:var(--gold);}
-  .streak{display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--card-border);padding:8px 12px;border-radius:999px;font-weight:700;font-size:14px;}
-
-  /* LEVEL CARD */
-  .level-card{
-    background:linear-gradient(145deg,#1c1a10,#141414);
-    border:1px solid #3a2f0f;
-    border-radius:var(--radius);
-    padding:20px;
-    margin-bottom:16px;
-    position:relative;
-    overflow:hidden;
-  }
-  .level-card::before{
-    content:"";position:absolute;top:-40%;right:-20%;width:220px;height:220px;
-    background:radial-gradient(circle,rgba(245,197,24,0.18),transparent 70%);
-    pointer-events:none;
-  }
-  .level-top{display:flex;justify-content:space-between;align-items:flex-start;}
-  .level-badge{
-    width:56px;height:56px;border-radius:16px;
-    background:linear-gradient(145deg,var(--gold2),var(--gold));
-    display:flex;align-items:center;justify-content:center;
-    font-weight:900;font-size:20px;color:#1a1400;
-    box-shadow:0 6px 18px rgba(245,197,24,0.25);
-    flex-shrink:0;
-  }
-  .level-info{margin-left:14px;flex:1;}
-  .level-name{font-size:13px;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:0.06em;}
-  .level-title{font-size:19px;font-weight:800;margin-top:2px;}
-  .level-top{display:flex;}
-  .xp-num{font-size:13px;color:var(--text-dim);font-weight:600;text-align:right;white-space:nowrap;}
-  .xp-track{
-    margin-top:16px;height:10px;border-radius:999px;background:#2a2510;overflow:hidden;
-    border:1px solid #3a3316;
-  }
-  .xp-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--gold),var(--gold2));transition:width .5s cubic-bezier(.34,1.56,.64,1);}
-
-  /* STATS ROW */
-  .stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px;}
-  .stat-box{background:var(--card);border:1px solid var(--card-border);border-radius:14px;padding:12px 8px;text-align:center;}
-  .stat-val{font-size:20px;font-weight:800;}
-  .stat-lbl{font-size:11px;color:var(--text-dim);margin-top:2px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
-
-  /* SECTION HEADER */
-  .section-head{display:flex;justify-content:space-between;align-items:center;margin:22px 0 10px;}
-  .section-title{font-size:16px;font-weight:800;}
-  .section-sub{font-size:12px;color:var(--text-dim);font-weight:600;}
-
-  /* QUEST LIST */
-  .quest{
-    display:flex;align-items:center;gap:12px;
-    background:var(--card);border:1px solid var(--card-border);border-radius:14px;
-    padding:14px;margin-bottom:10px;transition:transform .15s, opacity .3s;
-  }
-  .quest.done{opacity:.45;}
-  .quest.done .quest-title{text-decoration:line-through;}
-  .check{
-    width:26px;height:26px;border-radius:8px;border:2px solid #3a3a3a;flex-shrink:0;
-    display:flex;align-items:center;justify-content:center;font-weight:900;color:transparent;
-    transition:all .2s;
-  }
-  .quest.done .check{background:var(--green);border-color:var(--green);color:#06210f;}
-  .quest-body{flex:1;min-width:0;}
-  .quest-title{font-size:15px;font-weight:700;}
-  .quest-meta{font-size:11px;color:var(--text-dim);margin-top:2px;font-weight:600;}
-  .quest-xp{
-    font-size:12px;font-weight:800;color:var(--gold);background:rgba(245,197,24,0.1);
-    padding:5px 9px;border-radius:8px;flex-shrink:0;white-space:nowrap;
-  }
-  .quest-del{color:var(--text-dim);font-size:18px;padding:4px 6px;flex-shrink:0;}
-  .empty{
-    text-align:center;color:var(--text-dim);font-size:13px;padding:30px 10px;
-    border:1px dashed var(--card-border);border-radius:14px;
-  }
-
-  /* ACHIEVEMENTS */
-  .ach-scroll{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;margin:0 -16px;padding-left:16px;padding-right:16px;}
-  .ach-scroll::-webkit-scrollbar{display:none;}
-  .ach{
-    flex-shrink:0;width:84px;text-align:center;background:var(--card);border:1px solid var(--card-border);
-    border-radius:14px;padding:12px 6px;opacity:.4;
-  }
-  .ach.unlocked{opacity:1;border-color:#3a2f0f;background:linear-gradient(160deg,#1c1a10,#141414);}
-  .ach-emoji{font-size:26px;}
-  .ach-name{font-size:10px;font-weight:700;margin-top:6px;color:var(--text-dim);}
-  .ach.unlocked .ach-name{color:var(--text);}
-
-  /* ADD BUTTON (FAB + bar) */
-  .add-bar{
-    position:fixed;bottom:0;left:0;right:0;
-    padding:12px 16px calc(14px + env(safe-area-inset-bottom));
-    background:linear-gradient(180deg,transparent,var(--bg) 30%);
-  }
-  .add-btn{
-    max-width:448px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:8px;
-    background:var(--gold);color:#1a1400;font-weight:800;font-size:15px;
-    border:none;border-radius:14px;padding:15px;width:100%;
-  }
-  .add-btn:active{transform:scale(0.98);}
-
-  /* MODAL */
-  .overlay{
-    position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);
-    display:none;align-items:flex-end;z-index:50;
-  }
-  .overlay.show{display:flex;}
-  .sheet{
-    background:var(--bg2);border-radius:22px 22px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom));
-    width:100%;max-width:480px;margin:0 auto;border-top:1px solid var(--card-border);
-  }
-  .sheet h3{margin:0 0 14px;font-size:18px;font-weight:800;}
-  .field-label{font-size:12px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.04em;margin:14px 0 6px;}
-  input[type=text]{
-    width:100%;background:var(--card);border:1px solid var(--card-border);border-radius:12px;
-    padding:13px 14px;color:var(--text);font-size:15px;font-weight:600;
-  }
-  input[type=text]:focus{outline:none;border-color:var(--gold);}
-  .xp-pick{display:flex;gap:8px;}
-  .xp-pick button{
-    flex:1;padding:12px 0;border-radius:12px;border:1px solid var(--card-border);background:var(--card);
-    color:var(--text);font-weight:800;font-size:14px;
-  }
-  .xp-pick button.sel{background:var(--gold);color:#1a1400;border-color:var(--gold);}
-  .freq-pick{display:flex;gap:8px;}
-  .freq-pick button{
-    flex:1;padding:12px 0;border-radius:12px;border:1px solid var(--card-border);background:var(--card);
-    color:var(--text);font-weight:700;font-size:13px;
-  }
-  .freq-pick button.sel{background:#2a2510;color:var(--gold);border-color:var(--gold);}
-  .sheet-actions{display:flex;gap:10px;margin-top:20px;}
-  .btn-cancel{flex:1;padding:14px;border-radius:12px;border:1px solid var(--card-border);background:transparent;color:var(--text-dim);font-weight:700;}
-  .btn-save{flex:2;padding:14px;border-radius:12px;border:none;background:var(--gold);color:#1a1400;font-weight:800;font-size:15px;}
-
-  /* LEVEL UP TOAST */
-  .toast{
-    position:fixed;top:calc(20px + env(safe-area-inset-top));left:50%;transform:translateX(-50%) translateY(-120%);
-    background:linear-gradient(145deg,var(--gold2),var(--gold));color:#1a1400;font-weight:800;font-size:14px;
-    padding:12px 20px;border-radius:14px;box-shadow:0 10px 30px rgba(245,197,24,0.35);z-index:100;
-    transition:transform .4s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;
-  }
-  .toast.show{transform:translateX(-50%) translateY(0);}
+:root{--acc:#4f8cff;--acc-t12:rgba(79,140,255,.12);--acc-t22:rgba(79,140,255,.22);--acc-t45:rgba(79,140,255,.45);--acc-glow:rgba(79,140,255,.85);--acc-text:#a9c6ff;--acc-deep:#3a72e0}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:#08080a;color:#e9ecf2;font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;height:100%;overflow:hidden;user-select:none}
+button,input{font-family:inherit;color:inherit}
+input::placeholder{color:#565f70}
+::selection{background:var(--acc-t45)}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#242a35;border-radius:8px}
+::-webkit-scrollbar-thumb:hover{background:#313a4a}
+@keyframes toastIn{from{transform:translateY(22px) scale(.97);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
+@keyframes popIn{from{transform:scale(.965) translateY(10px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes breathe{0%,100%{opacity:.55}50%{opacity:.9}}
+@keyframes conf{from{transform:translate3d(0,-10vh,0) rotate(0deg);opacity:1}to{transform:translate3d(0,105vh,0) rotate(720deg);opacity:0}}
+.qrow{transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+.qrow:hover{transform:translateX(3px)}
+.qrow:hover .q-del{opacity:1 !important}
+[data-hk]{cursor:pointer}
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="header">
-      <div class="brand"><span class="bolt">⚡</span>LVL UP</div>
-      <div class="streak">🔥 <span id="streakNum">0</span></div>
-    </div>
-
-    <div class="level-card">
-      <div class="level-top">
-        <div class="level-badge" id="levelBadge">1</div>
-        <div class="level-info">
-          <div class="level-name">Уровень</div>
-          <div class="level-title" id="levelTitle">Новичок</div>
-        </div>
-        <div class="xp-num"><span id="xpCur">0</span>/<span id="xpNeed">100</span> XP</div>
-      </div>
-      <div class="xp-track"><div class="xp-fill" id="xpFill" style="width:0%"></div></div>
-    </div>
-
-    <div class="stats-row">
-      <div class="stat-box"><div class="stat-val" id="statDone">0</div><div class="stat-lbl">Сделано</div></div>
-      <div class="stat-box"><div class="stat-val" id="statXp">0</div><div class="stat-lbl">Всего XP</div></div>
-      <div class="stat-box"><div class="stat-val" id="statBest">0</div><div class="stat-lbl">Рекорд стрик</div></div>
-    </div>
-
-    <div class="section-head">
-      <div class="section-title">Квесты на сегодня</div>
-      <div class="section-sub" id="questCount"></div>
-    </div>
-    <div id="questList"></div>
-
-    <div class="section-head">
-      <div class="section-title">Ачивки</div>
-    </div>
-    <div class="ach-scroll" id="achList"></div>
-  </div>
-
-  <div class="add-bar">
-    <button class="add-btn" id="openAdd">＋ Новый квест</button>
-  </div>
-
-  <div class="overlay" id="overlay">
-    <div class="sheet">
-      <h3>Новый квест</h3>
-      <input type="text" id="questInput" placeholder="Например: 20 отжиманий" maxlength="60">
-      <div class="field-label">Сложность (XP)</div>
-      <div class="xp-pick" id="xpPick">
-        <button data-xp="10">10</button>
-        <button data-xp="20" class="sel">20</button>
-        <button data-xp="35">35</button>
-        <button data-xp="50">50</button>
-      </div>
-      <div class="field-label">Повтор</div>
-      <div class="freq-pick" id="freqPick">
-        <button data-freq="daily" class="sel">Каждый день</button>
-        <button data-freq="once">Разово</button>
-      </div>
-      <div class="sheet-actions">
-        <button class="btn-cancel" id="cancelAdd">Отмена</button>
-        <button class="btn-save" id="saveQuest">Добавить</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="toast" id="toast"></div>
-
+<div id="root"></div>
 <script>
 (function(){
-  "use strict";
-  var STORE_KEY = "lvlup_state_v1";
+"use strict";
+const MS = 86400000;
+const WD = ['вс','пн','вт','ср','чт','пт','сб'];
+const WD_FULL = ['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
+const MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const MONTHS_GEN = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const MON_SHORT = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+const RANKS = [[1,'Новичок'],[3,'Искатель'],[5,'Воин'],[8,'Мастер'],[12,'Легенда'],[16,'Титан']];
+const XP_OPTS = [[10,'легко'],[20,'норма'],[35,'сложно'],[50,'эпик']];
+const CATS = {
+  body: { name: 'Тело', icon: '💪', color: '#4f8cff' },
+  mind: { name: 'Разум', icon: '🧠', color: '#a78bfa' },
+  work: { name: 'Работа', icon: '⚙️', color: '#34d399' },
+  life: { name: 'Быт', icon: '🏠', color: '#ffc247' }
+};
+const CAT_ORDER = ['body', 'mind', 'work', 'life'];
+const tint = (hex, a) => { const n = parseInt(hex.slice(1), 16); return 'rgba(' + (n >> 16 & 255) + ',' + (n >> 8 & 255) + ',' + (n & 255) + ',' + a + ')'; };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-  var LEVEL_TITLES = ["Новичок","Стажёр","Боец","Атлет","Воин","Чемпион","Мастер","Легенда","Герой","Титан"];
-  var ACHIEVEMENTS = [
-    {id:"first",   emoji:"🎯", name:"Первый шаг", test:function(s){return s.totalDone>=1;}},
-    {id:"streak3", emoji:"🔥", name:"3 дня подряд", test:function(s){return s.bestStreak>=3;}},
-    {id:"streak7", emoji:"🌟", name:"Неделя огня", test:function(s){return s.bestStreak>=7;}},
-    {id:"done10",  emoji:"✅", name:"10 квестов", test:function(s){return s.totalDone>=10;}},
-    {id:"done50",  emoji:"🏆", name:"50 квестов", test:function(s){return s.totalDone>=50;}},
-    {id:"lvl5",    emoji:"💪", name:"5 уровень", test:function(s){return s.level>=5;}},
-    {id:"xp500",   emoji:"💰", name:"500 XP", test:function(s){return s.totalXp>=500;}},
-    {id:"streak30",emoji:"👑", name:"Месяц дисциплины", test:function(s){return s.bestStreak>=30;}}
-  ];
+const key = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+const rankFor = lvl => { let r = RANKS[0][1]; for (const [n, name] of RANKS) if (lvl >= n) r = name; return r; };
+const needFor = lvl => 100 + (lvl - 1) * 50;
 
-  function todayKey(){
-    var d = new Date();
-    return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();
+const STORE_KEY = 'lvlup_state_v3';
+const DEFAULT_QUESTS = [
+  { id: 1, title: 'Пробежка 5 км', xp: 35, type: 'daily', cat: 'body' },
+  { id: 2, title: 'Чтение — 20 страниц', xp: 20, type: 'daily', cat: 'mind' },
+  { id: 3, title: 'Медитация 10 минут', xp: 10, type: 'daily', cat: 'mind' },
+  { id: 4, title: 'Тренировка в зале', xp: 50, type: 'weekdays', days: [1, 3, 5], cat: 'body' },
+  { id: 5, title: 'Английский — один урок', xp: 20, type: 'weekdays', days: [2, 4, 6], cat: 'mind' },
+  { id: 6, title: 'Холодный душ', xp: 10, type: 'daily', cat: 'body' },
+  { id: 7, title: 'Разобрать входящие', xp: 20, type: 'everyN', n: 3, start: key(new Date()), cat: 'work' },
+  { id: 8, title: 'Глубокая работа — 2 часа', xp: 35, type: 'weekdays', days: [1, 2, 3, 4, 5], cat: 'work' },
+  { id: 9, title: 'Порядок на столе', xp: 10, type: 'daily', cat: 'life' },
+  { id: 10, title: 'План на завтра', xp: 10, type: 'daily', cat: 'life' },
+  { id: 11, title: 'Готовка на два дня', xp: 20, type: 'everyN', n: 2, start: key(new Date()), cat: 'life' }
+];
+
+function loadPersisted(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(!raw) return null;
+    const s = JSON.parse(raw);
+    if(!s || !Array.isArray(s.quests)) return null;
+    return s;
+  }catch(e){ return null; }
+}
+
+class App {
+  constructor(){
+    const persisted = loadPersisted();
+    const today = new Date();
+    this.state = {
+      quests: persisted ? persisted.quests : DEFAULT_QUESTS.slice(),
+      done: persisted ? persisted.done : {},
+      nextId: persisted ? persisted.nextId : 12,
+      accent: (persisted && persisted.accent) || 'blue',
+      today,
+      screen: 'today',
+      month: new Date(today.getFullYear(), today.getMonth(), 1),
+      showNew: false, dayKey: null,
+      formTitle: '', formXp: 20, formRepeat: 'daily', formDays: [1, 3, 5], formN: 2, formCat: 'body',
+      toasts: [], confetti: [], seq: 0
+    };
+    this.root = document.getElementById('root');
+    this._handlers = [];
+    this._formTitle = '';
+    this.root.addEventListener('click', e => {
+      const el = e.target.closest('[data-hk]');
+      if(el){ const fn = this._handlers[+el.dataset.hk]; if(fn) fn(e); }
+    });
+    this.applyAccent();
+    this.render();
   }
-  function yesterdayKey(){
-    var d = new Date(); d.setDate(d.getDate()-1);
-    return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();
+
+  persist(){
+    const { quests, done, nextId, accent } = this.state;
+    localStorage.setItem(STORE_KEY, JSON.stringify({ quests, done, nextId, accent }));
   }
 
-  function defaultState(){
+  setState(patch, cb){
+    Object.assign(this.state, typeof patch === 'function' ? patch(this.state) : patch);
+    this.render();
+    if(cb) cb();
+  }
+
+  applyAccent(){
+    const gold = this.state.accent === 'gold';
+    const set = (k, val) => document.documentElement.style.setProperty(k, val);
+    if(gold){
+      set('--acc', '#ffc247'); set('--acc-t12', 'rgba(255,194,71,.12)'); set('--acc-t22', 'rgba(255,194,71,.22)');
+      set('--acc-t45', 'rgba(255,194,71,.45)'); set('--acc-glow', 'rgba(255,194,71,.8)');
+      set('--acc-text', '#ffdf9e'); set('--acc-deep', '#e09f1f');
+    } else {
+      set('--acc', '#4f8cff'); set('--acc-t12', 'rgba(79,140,255,.12)'); set('--acc-t22', 'rgba(79,140,255,.22)');
+      set('--acc-t45', 'rgba(79,140,255,.45)'); set('--acc-glow', 'rgba(79,140,255,.85)');
+      set('--acc-text', '#a9c6ff'); set('--acc-deep', '#3a72e0');
+    }
+  }
+
+  scheduled(q, d){
+    if (q.type === 'daily') return true;
+    if (q.type === 'weekdays') return (q.days || []).includes(d.getDay());
+    if (q.type === 'everyN') { const s = new Date(q.start || key(this.state.today)); return Math.round((d - s) / MS) % (q.n || 2) === 0; }
+    return q.date === key(d);
+  }
+  repeatLabel(q){
+    if (q.type === 'daily') return 'ежедневно';
+    if (q.type === 'weekdays') return 'по дням: ' + (q.days || []).slice().sort().map(i => WD[i]).join(', ');
+    if (q.type === 'everyN') return 'каждые ' + (q.n || 2) + ' дн.';
+    return 'разово';
+  }
+  questsOn(d){ return this.state.quests.filter(q => this.scheduled(q, d)); }
+  xpOn(k){
+    const ids = this.state.done[k] || [];
+    return ids.reduce((s, id) => { const q = this.state.quests.find(x => x.id === id); return s + (q ? q.xp : 0); }, 0);
+  }
+  totalXp(){ return Object.keys(this.state.done).reduce((s, k) => s + this.xpOn(k), 0); }
+  levelInfo(){
+    let xp = this.totalXp(), lvl = 1;
+    while (xp >= needFor(lvl)) { xp -= needFor(lvl); lvl++; }
+    return { lvl, cur: xp, need: needFor(lvl) };
+  }
+  streakInfo(){
+    let cur = 0;
+    for (let i = 0; i < 400; i++) {
+      const k = key(new Date(this.state.today.getTime() - i * MS));
+      if ((this.state.done[k] || []).length) cur++; else { if (i > 0) break; }
+    }
+    let best = 0, run = 0;
+    for (let i = 400; i >= 0; i--) {
+      const k = key(new Date(this.state.today.getTime() - i * MS));
+      if ((this.state.done[k] || []).length) { run++; best = Math.max(best, run); } else run = 0;
+    }
+    return { cur, best: Math.max(best, cur) };
+  }
+
+  toggle(dKey, id){
+    const done = { ...this.state.done };
+    const list = (done[dKey] || []).slice();
+    const q = this.state.quests.find(x => x.id === id);
+    const i = list.indexOf(id);
+    const before = this.levelInfo().lvl;
+    if (i >= 0) list.splice(i, 1); else list.push(id);
+    done[dKey] = list;
+    this.setState({ done }, () => {
+      this.persist();
+      if (i >= 0) return;
+      const after = this.levelInfo().lvl;
+      if (after > before) { this.pushToast('🏆', 'Уровень ' + after + ' — ' + rankFor(after) + '!', 'Новый ранг открыт'); this.burst(); }
+      else this.pushToast('⚡', '+' + q.xp + ' XP', q.title);
+    });
+  }
+  pushToast(icon, title, sub){
+    const id = this.state.seq + 1;
+    this.setState(s => ({ seq: id, toasts: [...s.toasts, { id, icon, title, sub }] }));
+    setTimeout(() => this.setState(s => ({ toasts: s.toasts.filter(t => t.id !== id) })), 2600);
+  }
+  burst(){
+    const pieces = Array.from({ length: 70 }, (_, i) => ({
+      id: 'c' + Date.now() + i, left: Math.random() * 100, delay: Math.random() * 0.5,
+      dur: 1.5 + Math.random() * 1.1, size: 5 + Math.random() * 7,
+      color: ['var(--acc)', 'var(--acc-text)', '#ffc247', '#e9ecf2'][i % 4]
+    }));
+    this.setState({ confetti: pieces });
+    setTimeout(() => this.setState({ confetti: [] }), 2800);
+  }
+
+  computeVals(){
+    const s = this.state;
+    const { lvl, cur, need } = this.levelInfo();
+    const st = this.streakInfo();
+    const tk = key(s.today);
+    const doneIds = s.done[tk] || [];
+    const list = this.questsOn(s.today);
+    const doneToday = list.filter(q => doneIds.includes(q.id)).length;
+    const R = 39, circ = 2 * Math.PI * R;
+    const rowBase = 'display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:14px;border:1px solid #242a35;background:linear-gradient(165deg,#151820,#101319);';
+    const boxBase = 'flex:0 0 26px;width:26px;height:26px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;cursor:pointer;transition:all .18s ease;';
+    const xpBase = 'flex:0 0 auto;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:800;letter-spacing:-.01em;';
+
+    const mkRow = (q, dKey, doneList) => {
+      const isDone = doneList.includes(q.id);
+      const col = (CATS[q.cat] || CATS.body).color;
+      const hk = this.reg(() => this.toggle(dKey, q.id));
+      const dk2 = this.reg(e => { e.stopPropagation(); this.state.quests = this.state.quests.filter(x => x.id !== q.id); this.persist(); this.render(); });
+      return {
+        id: q.id, title: q.title, xp: q.xp, repeatLabel: this.repeatLabel(q), tick: isDone ? '✓' : '', hk, dk: dk2,
+        rowStyle: rowBase + 'border-left:2px solid ' + tint(col, isDone ? 0.35 : 0.85) + ';' + (isDone ? 'opacity:.6;' : ''),
+        boxStyle: boxBase + (isDone
+          ? 'background:' + col + ';border:1px solid ' + col + ';color:#0a0c11;box-shadow:0 0 16px -2px ' + tint(col, 0.85) + ';'
+          : 'background:transparent;border:1.5px solid ' + tint(col, 0.35) + ';color:transparent;'),
+        titleStyle: 'font-size:13.5px;font-weight:700;letter-spacing:-.015em;line-height:1.3;' + (isDone ? 'color:#7c8598;text-decoration:line-through;' : 'color:#e9ecf2;'),
+        xpStyle: xpBase + (isDone ? 'background:#1a1f29;color:#6b7488;' : 'background:' + tint(col, 0.13) + ';border:1px solid ' + tint(col, 0.3) + ';color:' + col + ';')
+      };
+    };
+
+    const navDefs = [['today', 'Сегодня', '◎'], ['calendar', 'Календарь', '▦'], ['stats', 'Статистика', '◧'], ['ach', 'Ачивки', '✦']];
+    const navItems = navDefs.map(([id, label, icon]) => ({
+      label, icon, hk: this.reg(() => this.setState({ screen: id })),
+      style: 'display:flex;align-items:center;gap:11px;width:100%;padding:11px 12px;border-radius:11px;border:1px solid ' + (s.screen === id ? 'var(--acc-t45)' : 'transparent') +
+        ';background:' + (s.screen === id ? 'var(--acc-t12)' : 'transparent') + ';color:' + (s.screen === id ? '#e9ecf2' : '#8d97ab') +
+        ';font-size:13px;font-weight:700;letter-spacing:-.01em;text-align:left;' +
+        (s.screen === id ? 'box-shadow:0 0 22px -12px var(--acc-glow);' : '')
+    }));
+
+    const m = s.month;
+    const first = new Date(m.getFullYear(), m.getMonth(), 1);
+    const lead = (first.getDay() + 6) % 7;
+    const daysInMonth = new Date(m.getFullYear(), m.getMonth() + 1, 0).getDate();
+    const cells = [];
+    for (let i = 0; i < lead; i++) cells.push({ label: '', style: 'min-height:92px;border-radius:13px;border:1px solid transparent;', numStyle: '', dots: [], hk: -1 });
+    for (let d = 1; d <= daysInMonth; d++) {
+      const date = new Date(m.getFullYear(), m.getMonth(), d);
+      const k = key(date);
+      const isToday = k === tk;
+      const future = date > s.today;
+      const dl = s.done[k] || [];
+      const qs = this.questsOn(date);
+      cells.push({
+        label: String(d), hk: this.reg(() => this.setState({ dayKey: k })),
+        style: 'min-height:92px;display:flex;flex-direction:column;gap:9px;padding:10px;border-radius:13px;background:' +
+          (future ? '#0d1015' : 'linear-gradient(165deg,#151820,#101319)') + ';border:1px solid ' + (isToday ? 'var(--acc)' : '#1e2431') +
+          ';' + (isToday ? 'box-shadow:0 0 22px -6px var(--acc-glow);' : ''),
+        numStyle: 'font-size:12px;font-weight:800;letter-spacing:-.02em;color:' + (isToday ? 'var(--acc-text)' : future ? '#4a5364' : '#8d97ab') + ';',
+        dots: qs.map(q => ({ style: 'width:8px;height:8px;border-radius:99px;display:inline-block;' + (dl.includes(q.id) ? 'background:var(--acc);box-shadow:0 0 7px var(--acc-glow);' : 'border:1.5px solid #333c4c;') }))
+      });
+    }
+
+    const endOffset = (s.today.getDay() + 6) % 7;
+    const weeks = [], months = [];
+    let heatTotal = 0;
+    for (let w = 17; w >= 0; w--) {
+      const dayCells = []; let label = '';
+      for (let dow = 0; dow < 7; dow++) {
+        const off = w * 7 + (endOffset - dow);
+        const date = new Date(s.today.getTime() - off * MS);
+        const k = key(date);
+        const n = off < 0 ? -1 : (s.done[k] || []).length;
+        if (dow === 0 && date.getDate() <= 7) label = MON_SHORT[date.getMonth()];
+        if (n > 0) heatTotal += n;
+        const alpha = n <= 0 ? 0 : Math.min(1, 0.22 + n * 0.2);
+        dayCells.push({
+          title: n < 0 ? '' : date.getDate() + ' ' + MONTHS_GEN[date.getMonth()] + ' — ' + n + ' квестов',
+          style: 'width:15px;height:15px;border-radius:4px;display:block;' + (off < 0 ? 'opacity:0;' : n === 0
+            ? 'background:#151a22;border:1px solid #1b202a;'
+            : 'background:color-mix(in srgb, var(--acc) ' + Math.round(alpha * 100) + '%, #0f1218);' + (n >= 4 ? 'box-shadow:0 0 8px -1px var(--acc-glow);' : ''))
+        });
+      }
+      weeks.push({ days: dayCells });
+      months.push({ name: label, style: 'width:15px;font-size:9px;font-weight:700;color:#5f6879;letter-spacing:.03em' });
+    }
+
+    const barData = [];
+    for (let i = 13; i >= 0; i--) { const date = new Date(s.today.getTime() - i * MS); barData.push({ date, xp: this.xpOn(key(date)) }); }
+    const maxXp = Math.max(40, ...barData.map(b => b.xp));
+    const bars = barData.map((b, bi) => {
+      const k = key(b.date);
+      const showLabel = bi % 2 === 1 || bi === barData.length - 1;
+      const ids = s.done[k] || [];
+      const isNow = k === tk;
+      const parts = CAT_ORDER.map(c => ({ c, sum: ids.reduce((a, id) => { const q = s.quests.find(x => x.id === id); return a + (q && q.cat === c ? q.xp : 0); }, 0) })).filter(p => p.sum > 0);
+      return {
+        xp: b.xp > 0 ? b.xp : '', label: showLabel ? String(b.date.getDate()) : '',
+        labelStyle: 'height:12px;line-height:12px;font-size:10px;font-weight:700;color:' + (isNow ? '#e9ecf2' : '#5f6879') + ';',
+        stackStyle: 'width:100%;display:flex;flex-direction:column-reverse;gap:2px;border-radius:8px 8px 4px 4px;overflow:hidden;height:' +
+          Math.max(2.5, (b.xp / maxXp) * 100) + '%;transition:height .5s cubic-bezier(.22,1,.36,1);' +
+          (b.xp === 0 ? 'background:#1a1f29;' : '') + (isNow ? 'outline:1px solid rgba(233,236,242,.22);outline-offset:2px;' : ''),
+        segments: parts.map(p => ({ style: 'display:block;width:100%;flex:' + p.sum + ' 1 0;min-height:4px;background:linear-gradient(180deg,' + CATS[p.c].color + ',' + tint(CATS[p.c].color, 0.55) + ');box-shadow:0 0 16px -6px ' + CATS[p.c].color + ';' }))
+      };
+    });
+    const barsTotal = barData.reduce((a, b) => a + b.xp, 0);
+    const trend = barData.map((b, i) => { const win = barData.slice(Math.max(0, i - 2), i + 1); return win.reduce((a, x) => a + x.xp, 0) / win.length; });
+    const px = i => (i / (barData.length - 1)) * 100;
+    const py = v => 100 - Math.min(100, (v / maxXp) * 100);
+    const trendLine = trend.map((v, i) => px(i).toFixed(2) + ',' + py(v).toFixed(2)).join(' ');
+    const trendArea = '0,100 ' + trendLine + ' 100,100';
+    const trendDots = trend.map((v, i) => ({ style: 'position:absolute;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;border-radius:99px;background:#0f1218;border:2px solid #e9ecf2;box-shadow:0 0 10px -1px rgba(233,236,242,.7);left:' + px(i).toFixed(2) + '%;top:' + py(v).toFixed(2) + '%;' }));
+
+    const totalDone = Object.values(s.done).reduce((a, l) => a + l.length, 0);
+    const achDefs = [
+      ['🌱', 'Первый шаг', 'Выполни первый квест', totalDone >= 1],
+      ['🔥', 'Неделя огня', '7 дней серии подряд', st.best >= 7],
+      ['🧊', 'Закалённый', '30 дней серии', st.best >= 30],
+      ['📚', 'Книжный червь', '50 квестов закрыто', totalDone >= 50],
+      ['🏃', 'Марафонец', '100 квестов закрыто', totalDone >= 100],
+      ['⚡', 'Уровень 5', 'Дойти до 5 уровня', lvl >= 5],
+      ['🛡️', 'Воин', 'Получить ранг Воин', lvl >= 5],
+      ['💎', 'Тысячник', '1000 XP всего', this.totalXp() >= 1000],
+      ['🎯', 'Идеальный день', 'Все квесты за день', doneToday === list.length && list.length > 0],
+      ['👑', 'Легенда', 'Дойти до 12 уровня', lvl >= 12],
+      ['🗿', 'Титан', 'Дойти до 16 уровня', lvl >= 16]
+    ];
+    const achievements = achDefs.map(([icon, title, desc, on]) => ({
+      icon, title, desc,
+      cardStyle: 'display:flex;flex-direction:column;gap:10px;padding:20px;border-radius:16px;background:' +
+        (on ? 'linear-gradient(165deg,#171b24,#11141b)' : '#101319') + ';border:1px solid ' + (on ? 'var(--acc-t45)' : '#1c212b') + ';' +
+        (on ? 'box-shadow:0 0 30px -18px var(--acc-glow);' : 'opacity:.55;'),
+      iconStyle: 'font-size:28px;line-height:1;' + (on ? 'filter:drop-shadow(0 0 12px var(--acc-glow));' : 'filter:grayscale(1);opacity:.7;'),
+      titleStyle: 'font-size:14px;font-weight:800;letter-spacing:-.02em;color:' + (on ? '#e9ecf2' : '#7c8598') + ';',
+      descStyle: 'font-size:11px;font-weight:500;line-height:1.45;color:' + (on ? '#8d97ab' : '#5f6879') + ';'
+    }));
+
+    const dk = s.dayKey;
+    const dayDate = dk ? new Date(dk) : null;
+    const dayList = dayDate ? this.questsOn(dayDate) : [];
+    const dayDone = dk ? (s.done[dk] || []) : [];
+
+    const segBase = 'flex:1;padding:9px 6px;border-radius:10px;border:1px solid transparent;background:transparent;color:#8d97ab;font-size:11px;font-weight:700;letter-spacing:-.005em;';
+    const repeatDefs = [['daily', 'Каждый день'], ['weekdays', 'По дням'], ['everyN', 'Каждые N'], ['once', 'Разово']];
+
+    const headings = { today: 'С возвращением, игрок', calendar: 'Календарь квестов', stats: 'Статистика прогресса', ach: 'Зал достижений' };
+    const subs = {
+      today: doneToday + ' из ' + list.length + ' квестов закрыто · +' + this.xpOn(tk) + ' XP сегодня',
+      calendar: 'Отмечай выполнение за любой день',
+      stats: 'Серия ' + st.cur + ' дн. · рекорд ' + st.best + ' дн.',
+      ach: 'Открывай бейджи, закрывая квесты'
+    };
+
     return {
-      quests: [
-        {id:cryptoId(), title:"Заправить кровать", xp:10, freq:"daily", doneDate:null},
-        {id:cryptoId(), title:"20 минут спорта", xp:35, freq:"daily", doneDate:null},
-        {id:cryptoId(), title:"Прочитать 10 страниц", xp:20, freq:"daily", doneDate:null}
+      navItems, screen: s.screen,
+      isToday: s.screen === 'today', isCalendar: s.screen === 'calendar', isStats: s.screen === 'stats', isAch: s.screen === 'ach',
+      heading: headings[s.screen],
+      dateLabel: WD_FULL[s.today.getDay()][0].toUpperCase() + WD_FULL[s.today.getDay()].slice(1) + ', ' + s.today.getDate() + ' ' + MONTHS_GEN[s.today.getMonth()] + ' · ' + subs[s.screen],
+      streak: st.cur, streakNote: st.cur >= st.best ? 'Это твой личный рекорд' : 'До рекорда ' + (st.best - st.cur) + ' дн.',
+      streakBarStyle: 'height:100%;width:' + Math.min(100, (st.cur / Math.max(st.best, 1)) * 100) + '%;border-radius:99px;background:linear-gradient(90deg,#ff8a3d,#ffc247);box-shadow:0 0 12px rgba(255,138,61,.6);',
+      level: lvl, rank: rankFor(lvl), nextLevel: lvl + 1, nextRank: rankFor(lvl + 1),
+      curXp: cur, needXp: need, xpLeft: need - cur,
+      ringCircum: circ, ringOffset: circ * (1 - cur / need),
+      xpBarStyle: 'height:100%;width:' + Math.round((cur / need) * 100) + '%;border-radius:99px;background:linear-gradient(90deg,var(--acc-deep),var(--acc));box-shadow:0 0 14px -2px var(--acc-glow);',
+      rankLadder: RANKS.map(([n, name]) => {
+        const reached = lvl >= n, current = rankFor(lvl) === name;
+        return { name, style: 'padding:4px 9px;border-radius:8px;font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;' +
+          (current ? 'background:var(--acc-t12);border:1px solid var(--acc-t45);color:var(--acc-text);box-shadow:0 0 20px -10px var(--acc-glow);'
+            : reached ? 'background:#171c25;border:1px solid #242a35;color:#8d97ab;' : 'background:transparent;border:1px dashed #242a35;color:#4a5364;') };
+      }),
+      stats: [
+        { label: 'Сегодня', value: doneToday + '/' + list.length, sub: '+' + this.xpOn(tk) + ' XP', icon: '✅' },
+        { label: 'Всего XP', value: this.totalXp().toLocaleString('ru-RU'), sub: 'уровень ' + lvl, icon: '⚡' },
+        { label: 'Рекорд серии', value: st.best, sub: 'дней подряд', icon: '🔥' },
+        { label: 'Квестов закрыто', value: totalDone, sub: 'за всё время', icon: '🏅' }
       ],
-      totalXp:0, totalDone:0, streak:0, bestStreak:0,
-      lastCompleteDate:null, unlocked:[]
+      heroLegend: CAT_ORDER.map(c => ({ name: CATS[c].name, dot: 'width:9px;height:9px;border-radius:3px;display:inline-block;background:' + CATS[c].color + ';box-shadow:0 0 10px -1px ' + tint(CATS[c].color, 0.8) + ';' }))
+        .concat([{ name: 'средн. за 3 дня', dot: 'width:16px;height:2px;border-radius:2px;display:inline-block;background:#e9ecf2;box-shadow:0 0 8px rgba(233,236,242,.6);' }]),
+      groups: CAT_ORDER.map(c => {
+        const qs = list.filter(q => (q.cat || 'body') === c);
+        const dn = qs.filter(q => doneIds.includes(q.id)).length;
+        const col = CATS[c].color;
+        const full = qs.length > 0 && dn === qs.length;
+        return {
+          name: CATS[c].name, icon: CATS[c].icon, done: dn, total: qs.length,
+          quests: qs.map(q => mkRow(q, tk, doneIds)),
+          cardStyle: 'padding:18px;border-radius:18px;background:radial-gradient(120% 90% at 0% 0%, ' + tint(col, full ? 0.14 : 0.08) + ', rgba(16,19,25,0) 60%), linear-gradient(165deg,#151820,#0f1218);border:1px solid ' + tint(col, full ? 0.5 : 0.22) + ';box-shadow:0 24px 60px -44px #000' + (full ? ', 0 0 40px -26px ' + col : '') + ';',
+          iconStyle: 'display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:9px;font-size:14px;background:' + tint(col, 0.14) + ';border:1px solid ' + tint(col, 0.3) + ';',
+          nameStyle: 'font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:' + col + ';',
+          countStyle: 'font-size:11px;font-weight:800;letter-spacing:.02em;color:' + (full ? col : '#6b7488') + ';',
+          barStyle: 'height:100%;width:' + (qs.length ? Math.round((dn / qs.length) * 100) : 0) + '%;border-radius:99px;background:linear-gradient(90deg,' + tint(col, 0.5) + ',' + col + ');box-shadow:0 0 12px -2px ' + col + ';'
+        };
+      }).filter(g => g.total > 0),
+      doneToday, countToday: list.length, allDone: list.length > 0 && doneToday === list.length,
+
+      weekdayNames: ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс'],
+      monthLabel: MONTHS[m.getMonth()] + ' ' + m.getFullYear(),
+      monthCells: cells,
+      prevHk: this.reg(() => this.setState({ month: new Date(m.getFullYear(), m.getMonth() - 1, 1) })),
+      nextHk: this.reg(() => this.setState({ month: new Date(m.getFullYear(), m.getMonth() + 1, 1) })),
+
+      heatWeeks: weeks, heatMonths: months, heatTotal,
+      heatLegend: [0, 1, 2, 3, 4].map(n => ({ style: 'width:11px;height:11px;border-radius:3px;display:inline-block;' + (n === 0 ? 'background:#151a22;border:1px solid #1b202a;' : 'background:color-mix(in srgb, var(--acc) ' + Math.round((0.22 + n * 0.2) * 100) + '%, #0f1218);') })),
+      bars, barsTotal, trendLine, trendArea, trendDots, barsAvg: Math.round(barsTotal / 14), barsMax: maxXp,
+
+      achievements, achDone: achDefs.filter(a => a[3]).length, achTotal: achDefs.length,
+
+      noopHk: this.reg(() => {}),
+      showNew: s.showNew,
+      openNewHk: this.reg(() => { this._formTitle = ''; this._focusTitle = true; this.setState({ showNew: true, formTitle: '' }); }),
+      closeNewHk: this.reg(() => this.setState({ showNew: false })),
+      formN: s.formN,
+      catOptions: CAT_ORDER.map(c => {
+        const col = CATS[c].color, on = s.formCat === c;
+        return { name: CATS[c].name, icon: CATS[c].icon, hk: this.reg(() => this.setState({ formCat: c })),
+          style: 'display:flex;flex-direction:column;align-items:center;gap:5px;padding:11px 4px;border-radius:12px;background:' +
+            (on ? tint(col, 0.13) : '#0f1218') + ';border:1px solid ' + (on ? tint(col, 0.5) : '#242a35') + ';color:' + (on ? col : '#7c8598') + ';' +
+            (on ? 'box-shadow:0 0 24px -14px ' + col + ';' : '') };
+      }),
+      xpOptions: XP_OPTS.map(([xp, label]) => ({
+        xp, label, hk: this.reg(() => this.setState({ formXp: xp })),
+        style: 'padding:12px 6px;border-radius:12px;display:flex;flex-direction:column;gap:3px;align-items:center;background:' +
+          (s.formXp === xp ? 'var(--acc-t12)' : '#0f1218') + ';border:1px solid ' + (s.formXp === xp ? 'var(--acc-t45)' : '#242a35') +
+          ';color:' + (s.formXp === xp ? 'var(--acc-text)' : '#7c8598') + ';' + (s.formXp === xp ? 'box-shadow:0 0 22px -12px var(--acc-glow);' : '') })),
+      repeatOptions: repeatDefs.map(([id, label]) => ({ label, hk: this.reg(() => this.setState({ formRepeat: id })), style: segBase + (s.formRepeat === id ? 'background:var(--acc-t12);border-color:var(--acc-t45);color:var(--acc-text);' : '') })),
+      showDayPicker: s.formRepeat === 'weekdays', showNPicker: s.formRepeat === 'everyN', showOnceNote: s.formRepeat === 'once',
+      dateShort: s.today.getDate() + ' ' + MONTHS_GEN[s.today.getMonth()],
+      dayToggles: [1, 2, 3, 4, 5, 6, 0].map(i => ({
+        name: WD[i], hk: this.reg(() => this.setState(st2 => ({ formDays: st2.formDays.includes(i) ? st2.formDays.filter(x => x !== i) : [...st2.formDays, i] }))),
+        style: 'flex:1;padding:9px 0;border-radius:10px;font-size:11px;font-weight:700;background:' +
+          (s.formDays.includes(i) ? 'var(--acc-t12)' : 'transparent') + ';border:1px solid ' + (s.formDays.includes(i) ? 'var(--acc-t45)' : '#242a35') +
+          ';color:' + (s.formDays.includes(i) ? 'var(--acc-text)' : '#7c8598') + ';' })),
+      incHk: this.reg(() => this.setState(st2 => ({ formN: Math.min(30, st2.formN + 1) }))),
+      decHk: this.reg(() => this.setState(st2 => ({ formN: Math.max(2, st2.formN - 1) }))),
+      createHk: this.reg(() => {
+        const title = (this._formTitle && this._formTitle.trim()) || 'Новый квест';
+        const q = { id: s.nextId, title, xp: s.formXp, type: s.formRepeat, days: s.formDays, n: s.formN, start: tk, date: tk, cat: s.formCat };
+        this.state.quests = [...s.quests, q]; this.state.nextId = s.nextId + 1; this.state.showNew = false; this.state.formTitle = '';
+        this.persist(); this.render();
+        this.pushToast('🎯', 'Квест добавлен', title + ' · +' + s.formXp + ' XP');
+      }),
+
+      showDay: !!dk, closeDayHk: this.reg(() => this.setState({ dayKey: null })),
+      dayTitle: dayDate ? dayDate.getDate() + ' ' + MONTHS_GEN[dayDate.getMonth()] + ' ' + dayDate.getFullYear() : '',
+      dayWeekday: dayDate ? WD_FULL[dayDate.getDay()] : '',
+      dayQuests: dayList.map(q => mkRow(q, dk, dayDone)),
+      dayEmpty: dayList.length === 0, dayXp: dk ? this.xpOn(dk) : 0,
+
+      toasts: s.toasts.map(t => ({ icon: t.icon, title: t.title, sub: t.sub })),
+      confetti: s.confetti.map(c => ({ style: 'position:absolute;top:0;left:' + c.left + '%;width:' + c.size + 'px;height:' + c.size * 1.6 + 'px;border-radius:2px;background:' + c.color + ';animation:conf ' + c.dur + 's ease-in ' + c.delay + 's forwards;' })),
+
+      accentIsGold: s.accent === 'gold',
+      toggleAccentHk: this.reg(() => { this.state.accent = s.accent === 'gold' ? 'blue' : 'gold'; this.applyAccent(); this.persist(); this.render(); })
     };
   }
-  function cryptoId(){ return Math.random().toString(36).slice(2)+Date.now().toString(36); }
 
-  function load(){
-    try{
-      var raw = localStorage.getItem(STORE_KEY);
-      if(!raw) return defaultState();
-      var s = JSON.parse(raw);
-      if(!s.quests) return defaultState();
-      return s;
-    }catch(e){ return defaultState(); }
-  }
-  function save(){ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+  reg(fn){ this._handlers.push(fn); return this._handlers.length - 1; }
 
-  var state = load();
-
-  // reset daily quests if date changed
-  (function rollDaily(){
-    var tk = todayKey();
-    state.quests.forEach(function(q){
-      if(q.freq==="daily" && q.doneDate && q.doneDate!==tk){
-        q.doneDate = null;
-      }
-    });
-    save();
-  })();
-
-  function xpForLevel(lvl){ return lvl*100; } // xp needed to go from lvl -> lvl+1
-  function computeLevel(totalXp){
-    var lvl=1, remaining=totalXp;
-    while(remaining >= xpForLevel(lvl)){
-      remaining -= xpForLevel(lvl);
-      lvl++;
+  render(){
+    this._handlers = [];
+    const v = this.computeVals();
+    this.root.innerHTML = this.buildHTML(v);
+    this.applyAccent();
+    const titleInput = document.getElementById('questTitleInput');
+    if (titleInput) {
+      titleInput.oninput = e => { this._formTitle = e.target.value; };
+      if (this._focusTitle) { titleInput.focus(); this._focusTitle = false; }
     }
-    return {level:lvl, cur:remaining, need:xpForLevel(lvl)};
   }
 
-  function render(){
-    var lv = computeLevel(state.totalXp);
-    document.getElementById("levelBadge").textContent = lv.level;
-    document.getElementById("levelTitle").textContent = LEVEL_TITLES[Math.min(lv.level-1, LEVEL_TITLES.length-1)];
-    document.getElementById("xpCur").textContent = lv.cur;
-    document.getElementById("xpNeed").textContent = lv.need;
-    document.getElementById("xpFill").style.width = Math.round((lv.cur/lv.need)*100)+"%";
-    document.getElementById("streakNum").textContent = state.streak;
-    document.getElementById("statDone").textContent = state.totalDone;
-    document.getElementById("statXp").textContent = state.totalXp;
-    document.getElementById("statBest").textContent = state.bestStreak;
+  buildHTML(v){
+    const rowHtml = q => `<div class="qrow" data-hk="${q.hk}" style="${q.rowStyle}">
+      <div style="${q.boxStyle}">${q.tick}</div>
+      <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
+        <div style="${q.titleStyle}">${esc(q.title)}</div>
+        <div style="font-size:10px;font-weight:600;color:#6b7488;letter-spacing:.01em">${esc(q.repeatLabel)}</div>
+      </div>
+      <span style="${q.xpStyle}">+${q.xp}</span>
+      <button type="button" class="q-del" data-hk="${q.dk}" style="flex:0 0 26px;width:26px;height:26px;border-radius:8px;border:1px solid transparent;background:transparent;color:#4a5364;font-size:11px;opacity:0;transition:opacity .15s">✕</button>
+    </div>`;
 
-    var tk = todayKey();
-    var list = document.getElementById("questList");
-    list.innerHTML = "";
-    var visible = state.quests;
-    document.getElementById("questCount").textContent =
-      visible.filter(function(q){return q.doneDate===tk;}).length + "/" + visible.length;
+    const todayView = `<div style="display:flex;flex-direction:column;gap:20px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:20px;align-items:stretch">
+        <div style="position:relative;padding:24px 26px;border-radius:18px;background:linear-gradient(170deg,#141821,#0f1218);border:1px solid #242a35;overflow:hidden">
+          <div style="position:absolute;top:-160px;left:20%;width:420px;height:420px;background:radial-gradient(closest-side,var(--acc-t12),transparent);pointer-events:none"></div>
+          <div style="position:relative;display:flex;align-items:flex-end;justify-content:space-between;gap:20px">
+            <div>
+              <div style="font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#6b7488">Динамика XP</div>
+              <div style="margin-top:8px;display:flex;align-items:baseline;gap:10px">
+                <span style="font-size:36px;font-weight:900;letter-spacing:-.055em;line-height:1">${v.barsTotal}</span>
+                <span style="font-size:13px;font-weight:700;color:#7c8598">XP за 14 дней</span>
+              </div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px 16px;max-width:60%">
+              ${v.heroLegend.map(hl => `<div style="display:flex;align-items:center;gap:7px;font-size:11px;font-weight:600;color:#8d97ab"><i style="${hl.dot}"></i><span>${esc(hl.name)}</span></div>`).join('')}
+            </div>
+          </div>
+          <div style="position:relative;display:flex;align-items:flex-end;gap:9px;height:212px;margin-top:22px">
+            ${v.bars.map(b => `<div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:7px;height:100%">
+              <div style="height:14px;font-size:10px;font-weight:700;color:#8d97ab;line-height:14px;white-space:nowrap">${b.xp}</div>
+              <div style="flex:1;width:100%;display:flex;align-items:flex-end"><div style="${b.stackStyle}">${b.segments.map(sg => `<i style="${sg.style}"></i>`).join('')}</div></div>
+              <div style="${b.labelStyle}">${b.label}</div>
+            </div>`).join('')}
+            <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute;left:0;right:0;top:21px;bottom:19px;width:100%;pointer-events:none;overflow:visible">
+              <polyline points="${v.trendArea}" fill="url(#trendFill)" stroke="none"></polyline>
+              <polyline points="${v.trendLine}" fill="none" stroke="#e9ecf2" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke" style="filter:drop-shadow(0 0 6px rgba(233,236,242,.55))"></polyline>
+              <defs><linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(233,236,242,.22)"></stop><stop offset="100%" stop-color="rgba(233,236,242,0)"></stop></linearGradient></defs>
+            </svg>
+            <div style="position:absolute;left:0;right:0;top:21px;bottom:19px;pointer-events:none">${v.trendDots.map(td => `<i style="${td.style}"></i>`).join('')}</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="position:relative;flex:1;padding:20px;border-radius:18px;background:linear-gradient(165deg,#171b24,#11141b);border:1px solid #242a35;overflow:hidden;box-shadow:0 24px 60px -36px #000">
+            <div style="position:absolute;top:-120px;right:-110px;width:300px;height:300px;background:radial-gradient(closest-side,var(--acc-t22),transparent);pointer-events:none"></div>
+            <div style="position:relative;display:flex;align-items:center;gap:16px">
+              <div style="position:relative;flex:0 0 92px;width:92px;height:92px">
+                <svg viewBox="0 0 92 92" style="width:92px;height:92px;transform:rotate(-90deg);overflow:visible">
+                  <circle cx="46" cy="46" r="39" fill="none" stroke="#1e2431" stroke-width="9"></circle>
+                  <circle cx="46" cy="46" r="39" fill="none" stroke-width="9" stroke-linecap="round" stroke-dasharray="${v.ringCircum}" stroke-dashoffset="${v.ringOffset}" style="stroke:var(--acc);filter:drop-shadow(0 0 10px var(--acc-glow));transition:stroke-dashoffset .9s cubic-bezier(.22,1,.36,1)"></circle>
+                </svg>
+                <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:900;letter-spacing:-.07em;text-shadow:0 0 26px var(--acc-t45)">${v.level}</div>
+              </div>
+              <div style="min-width:0">
+                <div style="font-size:10px;font-weight:700;letter-spacing:.17em;text-transform:uppercase;color:#6b7488">Уровень</div>
+                <div style="margin-top:6px;display:inline-flex;padding:4px 11px;border-radius:99px;border:1px solid var(--acc-t45);background:var(--acc-t12);font-size:11px;font-weight:700;letter-spacing:.05em;color:var(--acc-text);text-transform:uppercase">${esc(v.rank)}</div>
+                <div style="margin-top:10px;font-size:12px;font-weight:600;color:#7c8598">ещё <b style="color:#e9ecf2;font-weight:800">${v.xpLeft} XP</b> до ${v.nextLevel}</div>
+              </div>
+            </div>
+            <div style="position:relative;margin-top:16px;height:6px;border-radius:99px;background:#1d222c;overflow:hidden"><div style="${v.xpBarStyle}"></div></div>
+            <div style="position:relative;margin-top:9px;display:flex;justify-content:space-between;font-size:11px;color:#6b7488"><span>${v.curXp} / ${v.needXp} XP</span><span>далее: ${esc(v.nextRank)}</span></div>
+            <div style="position:relative;margin-top:16px;padding-top:14px;border-top:1px solid #1e2431;display:flex;flex-wrap:wrap;gap:6px">${v.rankLadder.map(rl => `<span style="${rl.style}">${esc(rl.name)}</span>`).join('')}</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            ${v.stats.map(st => `<div style="padding:15px;border-radius:15px;background:linear-gradient(165deg,#151820,#101319);border:1px solid #242a35">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><span style="font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#6b7488;line-height:1.3">${esc(st.label)}</span><span style="font-size:14px">${st.icon}</span></div>
+              <div style="margin-top:10px;font-size:26px;font-weight:900;letter-spacing:-.06em;line-height:1">${st.value}</div>
+              <div style="margin-top:4px;font-size:11px;font-weight:500;color:#6b7488">${esc(st.sub)}</div>
+            </div>`).join('')}
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:2px">
+        <h2 style="margin:0;font-size:15px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;color:#8d97ab">Квесты на сегодня</h2>
+        <span style="font-size:12px;font-weight:700;color:#6b7488">${v.doneToday} / ${v.countToday}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;align-items:start">
+        ${v.groups.map(g => `<div style="${g.cardStyle}">
+          <div style="display:flex;align-items:center;gap:10px;padding-bottom:12px;border-bottom:1px solid #1c212b">
+            <span style="${g.iconStyle}">${g.icon}</span><span style="${g.nameStyle}">${esc(g.name)}</span><span style="flex:1"></span><span style="${g.countStyle}">${g.done}/${g.total}</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:7px;margin-top:12px">${g.quests.map(rowHtml).join('')}</div>
+          <div style="margin-top:14px;height:4px;border-radius:99px;background:#171c25;overflow:hidden"><div style="${g.barStyle}"></div></div>
+        </div>`).join('')}
+      </div>
+      ${v.allDone ? `<div style="padding:16px 18px;border-radius:14px;border:1px solid var(--acc-t45);background:var(--acc-t12);font-size:13px;font-weight:700;color:var(--acc-text);letter-spacing:-.01em">День закрыт. Серия продолжается 🔥</div>` : ''}
+    </div>`;
 
-    if(visible.length===0){
-      list.innerHTML = '<div class="empty">Квестов пока нет — добавь первый ⬇</div>';
-    }
-    visible.forEach(function(q){
-      var done = q.doneDate === tk;
-      var el = document.createElement("div");
-      el.className = "quest"+(done?" done":"");
-      el.innerHTML =
-        '<div class="check">'+(done?"✓":"")+'</div>'+
-        '<div class="quest-body"><div class="quest-title"></div><div class="quest-meta">'+(q.freq==="daily"?"Ежедневно":"Разово")+'</div></div>'+
-        '<div class="quest-xp">+'+q.xp+' XP</div>'+
-        '<div class="quest-del">✕</div>';
-      el.querySelector(".quest-title").textContent = q.title;
-      el.querySelector(".check").addEventListener("click", function(){ toggleQuest(q); });
-      el.querySelector(".quest-body").addEventListener("click", function(){ toggleQuest(q); });
-      el.querySelector(".quest-del").addEventListener("click", function(ev){
-        ev.stopPropagation();
-        state.quests = state.quests.filter(function(x){return x.id!==q.id;});
-        save(); render();
-      });
-      list.appendChild(el);
-    });
+    const calendarView = `<div style="padding:26px;border-radius:18px;background:linear-gradient(170deg,#141821,#0f1218);border:1px solid #242a35">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:22px">
+        <button type="button" data-hk="${v.prevHk}" style="width:34px;height:34px;border-radius:10px;border:1px solid #242a35;background:#12151c;color:#9aa4b8;font-size:15px">‹</button>
+        <div style="min-width:206px;text-align:center;font-size:20px;font-weight:800;letter-spacing:-.038em">${v.monthLabel}</div>
+        <button type="button" data-hk="${v.nextHk}" style="width:34px;height:34px;border-radius:10px;border:1px solid #242a35;background:#12151c;color:#9aa4b8;font-size:15px">›</button>
+        <div style="flex:1"></div>
+        <div style="display:flex;align-items:center;gap:18px;font-size:11px;font-weight:600;color:#6b7488">
+          <span style="display:inline-flex;align-items:center;gap:7px"><i style="width:8px;height:8px;border-radius:99px;background:var(--acc);box-shadow:0 0 8px var(--acc-glow);display:inline-block"></i>выполнено</span>
+          <span style="display:inline-flex;align-items:center;gap:7px"><i style="width:8px;height:8px;border-radius:99px;border:1.5px solid #3a4356;display:inline-block"></i>не выполнено</span>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:8px">${v.weekdayNames.map(n => `<div style="text-align:center;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#5f6879">${n}</div>`).join('')}</div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px">${v.monthCells.map(c => `<div ${c.hk>=0?`data-hk="${c.hk}"`:''} style="${c.style}"><div style="${c.numStyle}">${c.label}</div><div style="display:flex;flex-wrap:wrap;gap:4px;align-content:flex-start">${c.dots.map(d => `<i style="${d.style}"></i>`).join('')}</div></div>`).join('')}</div>
+    </div>`;
 
-    var achWrap = document.getElementById("achList");
-    achWrap.innerHTML = "";
-    ACHIEVEMENTS.forEach(function(a){
-      var un = state.unlocked.indexOf(a.id)!==-1;
-      var el = document.createElement("div");
-      el.className = "ach"+(un?" unlocked":"");
-      el.innerHTML = '<div class="ach-emoji">'+a.emoji+'</div><div class="ach-name">'+a.name+'</div>';
-      achWrap.appendChild(el);
-    });
+    const statsView = `<div style="display:flex;flex-direction:column;gap:18px">
+      <div style="padding:26px;border-radius:18px;background:linear-gradient(170deg,#141821,#0f1218);border:1px solid #242a35">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:20px">
+          <div><h2 style="margin:0;font-size:19px;font-weight:800;letter-spacing:-.038em">Активность</h2><div style="margin-top:6px;font-size:12px;color:#6b7488">Последние 18 недель · ${v.heatTotal} квестов закрыто</div></div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:10px;font-weight:600;color:#6b7488"><span>меньше</span>${v.heatLegend.map(lg => `<i style="${lg.style}"></i>`).join('')}<span>больше</span></div>
+        </div>
+        <div style="display:flex;gap:5px">${v.heatWeeks.map(w => `<div style="display:flex;flex-direction:column;gap:5px">${w.days.map(hd => `<i title="${esc(hd.title)}" style="${hd.style}"></i>`).join('')}</div>`).join('')}</div>
+        <div style="display:flex;gap:5px;margin-top:10px">${v.heatMonths.map(hm => `<div style="${hm.style}">${hm.name}</div>`).join('')}</div>
+      </div>
+      <div style="padding:26px;border-radius:18px;background:linear-gradient(170deg,#141821,#0f1218);border:1px solid #242a35">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:26px">
+          <div><h2 style="margin:0;font-size:19px;font-weight:800;letter-spacing:-.038em">XP за 14 дней</h2><div style="margin-top:6px;font-size:12px;color:#6b7488">Всего ${v.barsTotal} XP · в среднем ${v.barsAvg} XP в день</div></div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--acc-text)">пик ${v.barsMax} XP</div>
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:10px;height:206px">${v.bars.map(b => `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end">
+          <div style="font-size:11px;font-weight:700;color:#8d97ab">${b.xp}</div>
+          <div style="${b.stackStyle}">${b.segments.map(sg => `<i style="${sg.style}"></i>`).join('')}</div>
+          <div style="font-size:10px;font-weight:600;color:#5f6879">${b.label}</div>
+        </div>`).join('')}</div>
+      </div>
+    </div>`;
+
+    const achView = `<div>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px"><h2 style="margin:0;font-size:19px;font-weight:800;letter-spacing:-.038em">Достижения</h2><span style="font-size:12px;font-weight:600;color:#6b7488">${v.achDone} из ${v.achTotal} открыто</span></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(212px,1fr));gap:14px">${v.achievements.map(a => `<div style="${a.cardStyle}"><div style="${a.iconStyle}">${a.icon}</div><div style="${a.titleStyle}">${esc(a.title)}</div><div style="${a.descStyle}">${esc(a.desc)}</div></div>`).join('')}</div>
+    </div>`;
+
+    const newModal = !v.showNew ? '' : `<div data-hk="${v.closeNewHk}" style="position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(4,5,8,.74);backdrop-filter:blur(7px);animation:fadeIn .18s ease">
+      <div data-hk="${v.noopHk}" style="width:520px;max-height:88vh;overflow-y:auto;padding:28px;border-radius:20px;background:linear-gradient(170deg,#171b24,#0f1218);border:1px solid #2a3241;box-shadow:0 44px 96px -34px #000;animation:popIn .22s cubic-bezier(.22,1,.36,1)">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px">
+          <div><div style="font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--acc-text)">Новый квест</div><h3 style="margin:8px 0 0;font-size:24px;font-weight:800;letter-spacing:-.045em">Что берём в работу?</h3></div>
+          <button type="button" data-hk="${v.closeNewHk}" style="width:32px;height:32px;flex:0 0 32px;border-radius:10px;border:1px solid #242a35;background:transparent;color:#7c8598">✕</button>
+        </div>
+        <div style="margin-top:24px;font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:#6b7488">Название</div>
+        <input id="questTitleInput" value="${esc(this._formTitle)}" placeholder="Например: 30 минут бега" style="width:100%;margin-top:9px;padding:13px 14px;border-radius:12px;border:1px solid #242a35;background:#0f1218;color:#e9ecf2;font-size:14px;font-weight:500;outline:none" />
+        <div style="margin-top:22px;font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:#6b7488">Ветка</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:9px">${v.catOptions.map(c => `<button type="button" data-hk="${c.hk}" style="${c.style}"><span style="font-size:16px">${c.icon}</span><span style="font-size:11px;font-weight:800;letter-spacing:.03em">${esc(c.name)}</span></button>`).join('')}</div>
+        <div style="margin-top:22px;font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:#6b7488">Сложность</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:9px">${v.xpOptions.map(x => `<button type="button" data-hk="${x.hk}" style="${x.style}"><div style="font-size:19px;font-weight:900;letter-spacing:-.05em">${x.xp}</div><div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.7">${x.label}</div></button>`).join('')}</div>
+        <div style="margin-top:22px;font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:#6b7488">Повтор</div>
+        <div style="display:flex;gap:4px;margin-top:9px;padding:4px;border-radius:13px;background:#0f1218;border:1px solid #242a35">${v.repeatOptions.map(r => `<button type="button" data-hk="${r.hk}" style="${r.style}">${r.label}</button>`).join('')}</div>
+        ${v.showDayPicker ? `<div style="margin-top:16px;padding:16px;border-radius:14px;background:#0f1218;border:1px solid #1e2431;animation:fadeIn .2s ease">
+          <div style="font-size:11px;font-weight:600;color:#7c8598;margin-bottom:11px">В какие дни недели?</div>
+          <div style="display:flex;gap:7px">${v.dayToggles.map(dt => `<button type="button" data-hk="${dt.hk}" style="${dt.style}">${dt.name}</button>`).join('')}</div>
+        </div>` : ''}
+        ${v.showNPicker ? `<div style="margin-top:16px;padding:16px;border-radius:14px;background:#0f1218;border:1px solid #1e2431;animation:fadeIn .2s ease">
+          <div style="font-size:11px;font-weight:600;color:#7c8598;margin-bottom:11px">Интервал в днях</div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <button type="button" data-hk="${v.decHk}" style="width:34px;height:34px;border-radius:10px;border:1px solid #242a35;background:#12151c;color:#9aa4b8;font-size:16px">−</button>
+            <div style="min-width:56px;text-align:center;font-size:24px;font-weight:900;letter-spacing:-.05em">${v.formN}</div>
+            <button type="button" data-hk="${v.incHk}" style="width:34px;height:34px;border-radius:10px;border:1px solid #242a35;background:#12151c;color:#9aa4b8;font-size:16px">+</button>
+            <span style="font-size:12px;color:#6b7488">каждые ${v.formN} дн.</span>
+          </div>
+        </div>` : ''}
+        ${v.showOnceNote ? `<div style="margin-top:16px;padding:16px;border-radius:14px;background:#0f1218;border:1px solid #1e2431;font-size:12px;color:#7c8598;animation:fadeIn .2s ease">Разовый квест на ${v.dateShort}. Пропадёт из списка после выполнения.</div>` : ''}
+        <div style="display:flex;gap:10px;margin-top:26px">
+          <button type="button" data-hk="${v.closeNewHk}" style="flex:0 0 auto;padding:13px 20px;border-radius:12px;border:1px solid #242a35;background:transparent;color:#9aa4b8;font-size:13px;font-weight:700">Отмена</button>
+          <button type="button" data-hk="${v.createHk}" style="flex:1;padding:13px 20px;border-radius:12px;border:1px solid var(--acc-t45);background:linear-gradient(180deg,var(--acc),var(--acc-deep));color:#f4f7ff;font-size:13px;font-weight:800;letter-spacing:-.01em;box-shadow:0 10px 28px -12px var(--acc-glow)">Создать квест</button>
+        </div>
+      </div>
+    </div>`;
+
+    const dayModal = !v.showDay ? '' : `<div data-hk="${v.closeDayHk}" style="position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(4,5,8,.74);backdrop-filter:blur(7px);animation:fadeIn .18s ease">
+      <div data-hk="${v.noopHk}" style="width:460px;max-height:82vh;overflow-y:auto;padding:26px;border-radius:20px;background:linear-gradient(170deg,#171b24,#0f1218);border:1px solid #2a3241;box-shadow:0 44px 96px -34px #000;animation:popIn .22s cubic-bezier(.22,1,.36,1)">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px">
+          <div><div style="font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--acc-text)">${esc(v.dayWeekday)}</div><h3 style="margin:8px 0 0;font-size:22px;font-weight:800;letter-spacing:-.045em">${v.dayTitle}</h3></div>
+          <button type="button" data-hk="${v.closeDayHk}" style="width:32px;height:32px;flex:0 0 32px;border-radius:10px;border:1px solid #242a35;background:transparent;color:#7c8598">✕</button>
+        </div>
+        <div style="margin-top:20px;display:flex;flex-direction:column;gap:9px">${v.dayQuests.map(q => `<div class="qrow" data-hk="${q.hk}" style="${q.rowStyle}"><div style="${q.boxStyle}">${q.tick}</div><div style="flex:1;min-width:0"><div style="${q.titleStyle}">${esc(q.title)}</div></div><span style="${q.xpStyle}">+${q.xp} XP</span></div>`).join('')}</div>
+        ${v.dayEmpty ? `<div style="margin-top:18px;padding:18px;border-radius:14px;border:1px dashed #242a35;text-align:center;font-size:12px;color:#6b7488">На этот день квестов нет</div>` : ''}
+        <div style="margin-top:20px;padding-top:16px;border-top:1px solid #1e2431;display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:#7c8598"><span>Заработано</span><span style="color:var(--acc-text)">${v.dayXp} XP</span></div>
+      </div>
+    </div>`;
+
+    const toasts = v.toasts.length === 0 ? '' : `<div style="position:fixed;bottom:28px;right:28px;z-index:70;display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:none">
+      ${v.toasts.map(t => `<div style="display:flex;align-items:center;gap:13px;padding:14px 18px;border-radius:14px;background:linear-gradient(165deg,#1a1f2a,#11141b);border:1px solid var(--acc-t45);box-shadow:0 20px 44px -22px #000,0 0 30px -18px var(--acc-glow);animation:toastIn .28s cubic-bezier(.22,1,.36,1);min-width:230px">
+        <span style="font-size:19px">${t.icon}</span><div><div style="font-size:14px;font-weight:800;letter-spacing:-.02em;color:var(--acc-text)">${esc(t.title)}</div><div style="margin-top:3px;font-size:11px;font-weight:600;color:#8d97ab">${esc(t.sub)}</div></div>
+      </div>`).join('')}
+    </div>`;
+
+    const confetti = v.confetti.length === 0 ? '' : `<div style="position:fixed;inset:0;z-index:80;pointer-events:none;overflow:hidden">${v.confetti.map(c => `<i style="${c.style}"></i>`).join('')}</div>`;
+
+    return `<div style="display:flex;height:100vh;background:#08080a;position:relative;overflow:hidden;font-family:'Inter',system-ui,sans-serif">
+      <div style="position:absolute;top:-380px;left:-240px;width:900px;height:900px;pointer-events:none;background:radial-gradient(closest-side,var(--acc-t22),transparent);filter:blur(26px);animation:breathe 9s ease-in-out infinite"></div>
+      <div style="position:absolute;bottom:-460px;right:-280px;width:1040px;height:1040px;pointer-events:none;background:radial-gradient(closest-side,var(--acc-t12),transparent);filter:blur(34px);animation:breathe 13s ease-in-out infinite"></div>
+      <aside style="position:relative;z-index:2;width:236px;flex:0 0 236px;display:flex;flex-direction:column;gap:8px;padding:26px 18px 22px;background:linear-gradient(180deg,rgba(21,24,32,.88),rgba(9,10,14,.88));border-right:1px solid #1a1e27;backdrop-filter:blur(14px)">
+        <div style="display:flex;align-items:center;gap:9px;padding:0 8px 24px"><span style="font-size:20px;filter:drop-shadow(0 0 10px var(--acc-glow))">⚡</span><span style="font-size:19px;font-weight:900;letter-spacing:-.045em">LVL UP</span></div>
+        <nav style="display:flex;flex-direction:column;gap:4px">${v.navItems.map(n => `<button type="button" data-hk="${n.hk}" style="${n.style}"><span style="width:18px;display:inline-flex;justify-content:center;font-size:14px">${n.icon}</span><span>${n.label}</span></button>`).join('')}</nav>
+        <div style="flex:1"></div>
+        <button type="button" data-hk="${v.toggleAccentHk}" style="text-align:left;padding:9px 12px;border-radius:11px;border:1px solid #242a35;background:transparent;color:#6b7488;font-size:11px;font-weight:700">Тема: ${v.accentIsGold ? 'Золото ✨' : 'Синяя ⚡'}</button>
+        <div style="padding:16px;border-radius:14px;background:linear-gradient(160deg,#151820,#101319);border:1px solid #242a35;box-shadow:inset 0 1px 0 rgba(255,255,255,.03)">
+          <div style="font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#6b7488">Серия</div>
+          <div style="display:flex;align-items:baseline;gap:8px;margin-top:9px"><span style="font-size:21px;filter:drop-shadow(0 0 12px rgba(255,138,61,.6))">🔥</span><span style="font-size:34px;font-weight:900;letter-spacing:-.055em;line-height:1">${v.streak}</span><span style="font-size:12px;font-weight:600;color:#7c8598">дней</span></div>
+          <div style="margin-top:13px;height:5px;border-radius:99px;background:#1d222c;overflow:hidden"><div style="${v.streakBarStyle}"></div></div>
+          <div style="margin-top:10px;font-size:11px;color:#6b7488;line-height:1.4">${esc(v.streakNote)}</div>
+        </div>
+      </aside>
+      <main style="position:relative;z-index:2;flex:1;min-width:0;overflow-y:auto;padding:34px 44px 60px">
+        <header style="display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:26px">
+          <div><h1 style="margin:0;font-size:34px;font-weight:800;letter-spacing:-.048em;line-height:1.05">${esc(v.heading)}</h1><div style="margin-top:8px;font-size:13px;font-weight:500;color:#7c8598">${esc(v.dateLabel)}</div></div>
+          <button type="button" data-hk="${v.openNewHk}" style="display:inline-flex;align-items:center;gap:8px;padding:12px 18px;border-radius:12px;border:1px solid var(--acc-t45);background:linear-gradient(180deg,var(--acc),var(--acc-deep));color:#f4f7ff;font-size:13px;font-weight:700;letter-spacing:-.01em;box-shadow:0 10px 28px -12px var(--acc-glow)"><span style="font-size:15px;line-height:1">+</span><span>Новый квест</span></button>
+        </header>
+        ${v.isToday ? todayView : ''}
+        ${v.isCalendar ? calendarView : ''}
+        ${v.isStats ? statsView : ''}
+        ${v.isAch ? achView : ''}
+      </main>
+      ${newModal}
+      ${dayModal}
+      ${toasts}
+      ${confetti}
+    </div>`;
   }
+}
 
-  function checkAchievements(){
-    ACHIEVEMENTS.forEach(function(a){
-      if(state.unlocked.indexOf(a.id)===-1 && a.test(state)){
-        state.unlocked.push(a.id);
-        showToast("🏅 Ачивка: "+a.name);
-      }
-    });
-  }
-
-  function updateStreak(){
-    var tk = todayKey(), yk = yesterdayKey();
-    if(state.lastCompleteDate === tk) return; // already counted today
-    if(state.lastCompleteDate === yk){
-      state.streak += 1;
-    } else {
-      state.streak = 1;
-    }
-    state.lastCompleteDate = tk;
-    if(state.streak > state.bestStreak) state.bestStreak = state.streak;
-  }
-
-  var toastTimer;
-  function showToast(msg){
-    var t = document.getElementById("toast");
-    t.textContent = msg;
-    t.classList.add("show");
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(function(){ t.classList.remove("show"); }, 2200);
-  }
-
-  function toggleQuest(q){
-    var tk = todayKey();
-    var wasDone = q.doneDate === tk;
-    if(wasDone){
-      q.doneDate = null;
-      state.totalXp = Math.max(0, state.totalXp - q.xp);
-      state.totalDone = Math.max(0, state.totalDone - 1);
-    } else {
-      var prevLevel = computeLevel(state.totalXp).level;
-      q.doneDate = tk;
-      state.totalXp += q.xp;
-      state.totalDone += 1;
-      updateStreak();
-      var newLevel = computeLevel(state.totalXp).level;
-      if(newLevel > prevLevel){
-        showToast("⚡ Новый уровень: "+newLevel+"!");
-      } else {
-        showToast("+"+q.xp+" XP");
-      }
-      checkAchievements();
-    }
-    save();
-    render();
-  }
-
-  // ADD QUEST MODAL
-  var overlay = document.getElementById("overlay");
-  var pickedXp = 20, pickedFreq = "daily";
-
-  document.getElementById("openAdd").addEventListener("click", function(){
-    document.getElementById("questInput").value = "";
-    overlay.classList.add("show");
-  });
-  document.getElementById("cancelAdd").addEventListener("click", function(){
-    overlay.classList.remove("show");
-  });
-  overlay.addEventListener("click", function(e){
-    if(e.target === overlay) overlay.classList.remove("show");
-  });
-  document.querySelectorAll("#xpPick button").forEach(function(b){
-    b.addEventListener("click", function(){
-      document.querySelectorAll("#xpPick button").forEach(function(x){x.classList.remove("sel");});
-      b.classList.add("sel");
-      pickedXp = parseInt(b.dataset.xp, 10);
-    });
-  });
-  document.querySelectorAll("#freqPick button").forEach(function(b){
-    b.addEventListener("click", function(){
-      document.querySelectorAll("#freqPick button").forEach(function(x){x.classList.remove("sel");});
-      b.classList.add("sel");
-      pickedFreq = b.dataset.freq;
-    });
-  });
-  document.getElementById("saveQuest").addEventListener("click", function(){
-    var title = document.getElementById("questInput").value.trim();
-    if(!title) return;
-    state.quests.push({id:cryptoId(), title:title, xp:pickedXp, freq:pickedFreq, doneDate:null});
-    save();
-    render();
-    overlay.classList.remove("show");
-  });
-
-  render();
-
-  if("serviceWorker" in navigator){
-    window.addEventListener("load", function(){
-      navigator.serviceWorker.register("sw.js").catch(function(){});
-    });
-  }
+window.addEventListener('DOMContentLoaded', () => { window.__app = new App(); });
 })();
 </script>
 </body>
