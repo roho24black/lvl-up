@@ -252,7 +252,7 @@ class App {
       const dl = s.done[k] || [];
       const qs = this.questsOn(date);
       cells.push({
-        label: String(d), hk: this.reg(() => this.setState({ dayKey: k })),
+        label: String(d), hk: this.reg(() => { this._guardUntil = Date.now() + 400; this.setState({ dayKey: k }); }),
         style: 'min-height:92px;display:flex;flex-direction:column;gap:9px;padding:10px;border-radius:13px;background:' +
           (future ? '#0d1015' : 'linear-gradient(165deg,#151820,#101319)') + ';border:1px solid ' + (isToday ? 'var(--acc)' : '#1e2431') +
           ';' + (isToday ? 'box-shadow:0 0 22px -6px var(--acc-glow);' : ''),
@@ -407,8 +407,9 @@ class App {
 
       noopHk: this.reg(() => {}),
       showNew: s.showNew,
-      openNewHk: this.reg(() => { this._formTitle = ''; this._focusTitle = true; this.setState({ showNew: true, formTitle: '' }); }),
+      openNewHk: this.reg(() => { this._formTitle = ''; this._focusTitle = true; this._guardUntil = Date.now() + 400; this.setState({ showNew: true, formTitle: '' }); }),
       closeNewHk: this.reg(() => this.setState({ showNew: false })),
+      backdropCloseNewHk: this.reg(() => { if (Date.now() < (this._guardUntil || 0)) return; this.setState({ showNew: false }); }),
       formN: s.formN,
       catOptions: CAT_ORDER.map(c => {
         const col = CATS[c].color, on = s.formCat === c;
@@ -441,6 +442,7 @@ class App {
       }),
 
       showDay: !!dk, closeDayHk: this.reg(() => this.setState({ dayKey: null })),
+      backdropCloseDayHk: this.reg(() => { if (Date.now() < (this._guardUntil || 0)) return; this.setState({ dayKey: null }); }),
       dayTitle: dayDate ? dayDate.getDate() + ' ' + MONTHS_GEN[dayDate.getMonth()] + ' ' + dayDate.getFullYear() : '',
       dayWeekday: dayDate ? WD_FULL[dayDate.getDay()] : '',
       dayQuests: dayList.map(q => mkRow(q, dk, dayDone)),
@@ -597,7 +599,7 @@ class App {
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(212px,1fr));gap:14px">${v.achievements.map(a => `<div style="${a.cardStyle}"><div style="${a.iconStyle}">${a.icon}</div><div style="${a.titleStyle}">${esc(a.title)}</div><div style="${a.descStyle}">${esc(a.desc)}</div></div>`).join('')}</div>
     </div>`;
 
-    const newModal = !v.showNew ? '' : `<div data-hk="${v.closeNewHk}" style="position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(4,5,8,.74);backdrop-filter:blur(7px);animation:fadeIn .18s ease">
+    const newModal = !v.showNew ? '' : `<div data-hk="${v.backdropCloseNewHk}" style="position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(4,5,8,.74);backdrop-filter:blur(7px);animation:fadeIn .18s ease">
       <div data-hk="${v.noopHk}" style="width:520px;max-height:88vh;overflow-y:auto;padding:28px;border-radius:20px;background:linear-gradient(170deg,#171b24,#0f1218);border:1px solid #2a3241;box-shadow:0 44px 96px -34px #000;animation:popIn .22s cubic-bezier(.22,1,.36,1)">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px">
           <div><div style="font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--acc-text)">Новый квест</div><h3 style="margin:8px 0 0;font-size:24px;font-weight:800;letter-spacing:-.045em">Что берём в работу?</h3></div>
@@ -632,7 +634,7 @@ class App {
       </div>
     </div>`;
 
-    const dayModal = !v.showDay ? '' : `<div data-hk="${v.closeDayHk}" style="position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(4,5,8,.74);backdrop-filter:blur(7px);animation:fadeIn .18s ease">
+    const dayModal = !v.showDay ? '' : `<div data-hk="${v.backdropCloseDayHk}" style="position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(4,5,8,.74);backdrop-filter:blur(7px);animation:fadeIn .18s ease">
       <div data-hk="${v.noopHk}" style="width:460px;max-height:82vh;overflow-y:auto;padding:26px;border-radius:20px;background:linear-gradient(170deg,#171b24,#0f1218);border:1px solid #2a3241;box-shadow:0 44px 96px -34px #000;animation:popIn .22s cubic-bezier(.22,1,.36,1)">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px">
           <div><div style="font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--acc-text)">${esc(v.dayWeekday)}</div><h3 style="margin:8px 0 0;font-size:22px;font-weight:800;letter-spacing:-.045em">${v.dayTitle}</h3></div>
