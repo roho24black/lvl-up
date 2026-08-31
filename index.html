@@ -97,11 +97,25 @@ class App {
       toasts: [], confetti: [], seq: 0
     };
     this.root = document.getElementById('root');
-    this._handlers = [];
+    this._handlers = {};
     this._formTitle = '';
+    this._lastClickKey = null;
+    this._lastClickAt = 0;
+    // WKWebView (the native macOS wrapper) sometimes dispatches two 'click' events for a single
+    // physical click, a few ms apart. Handlers are keyed by a stable string (not a positional
+    // index — those shift between renders as list lengths change), so we can safely ignore a
+    // second click on the *same* stable key within a short window without ever blocking a
+    // legitimate, fast click on a *different* element right after.
     this.root.addEventListener('click', e => {
       const el = e.target.closest('[data-hk]');
-      if(el){ const fn = this._handlers[+el.dataset.hk]; if(fn) fn(e); }
+      if(!el) return;
+      const hk = el.dataset.hk;
+      const now = Date.now();
+      if (hk === this._lastClickKey && now - this._lastClickAt < 250) return;
+      this._lastClickAt = now;
+      this._lastClickKey = hk;
+      const fn = this._handlers[hk];
+      if(fn) fn(e);
     });
     this.applyAccent();
     this.render();
@@ -216,8 +230,8 @@ class App {
     const mkRow = (q, dKey, doneList) => {
       const isDone = doneList.includes(q.id);
       const col = (CATS[q.cat] || CATS.body).color;
-      const hk = this.reg(() => this.toggle(dKey, q.id));
-      const dk2 = this.reg(e => { e.stopPropagation(); this.state.quests = this.state.quests.filter(x => x.id !== q.id); this.persist(); this.render(); });
+      const hk = this.reg('toggle:' + q.id + ':' + dKey, () => this.toggle(dKey, q.id));
+      const dk2 = this.reg('del:' + q.id, e => { e.stopPropagation(); this.state.quests = this.state.quests.filter(x => x.id !== q.id); this.persist(); this.render(); });
       return {
         id: q.id, title: q.title, xp: q.xp, repeatLabel: this.repeatLabel(q), tick: isDone ? '✓' : '', hk, dk: dk2,
         rowStyle: rowBase + 'border-left:2px solid ' + tint(col, isDone ? 0.35 : 0.85) + ';' + (isDone ? 'opacity:.6;' : ''),
@@ -231,7 +245,7 @@ class App {
 
     const navDefs = [['today', 'Сегодня', '◎'], ['calendar', 'Календарь', '▦'], ['stats', 'Статистика', '◧'], ['ach', 'Ачивки', '✦']];
     const navItems = navDefs.map(([id, label, icon]) => ({
-      label, icon, hk: this.reg(() => this.setState({ screen: id })),
+      label, icon, hk: this.reg('nav:' + id, () => this.setState({ screen: id })),
       style: 'display:flex;align-items:center;gap:11px;width:100%;padding:11px 12px;border-radius:11px;border:1px solid ' + (s.screen === id ? 'var(--acc-t45)' : 'transparent') +
         ';background:' + (s.screen === id ? 'var(--acc-t12)' : 'transparent') + ';color:' + (s.screen === id ? '#e9ecf2' : '#8d97ab') +
         ';font-size:13px;font-weight:700;letter-spacing:-.01em;text-align:left;' +
@@ -252,7 +266,7 @@ class App {
       const dl = s.done[k] || [];
       const qs = this.questsOn(date);
       cells.push({
-        label: String(d), hk: this.reg(() => { this._guardUntil = Date.now() + 400; this.setState({ dayKey: k }); }),
+        label: String(d), hk: this.reg('day:' + k, () => { this._guardUntil = Date.now() + 400; this.setState({ dayKey: k }); }),
         style: 'min-height:92px;display:flex;flex-direction:column;gap:9px;padding:10px;border-radius:13px;background:' +
           (future ? '#0d1015' : 'linear-gradient(165deg,#151820,#101319)') + ';border:1px solid ' + (isToday ? 'var(--acc)' : '#1e2431') +
           ';' + (isToday ? 'box-shadow:0 0 22px -6px var(--acc-glow);' : ''),
@@ -396,8 +410,8 @@ class App {
       weekdayNames: ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс'],
       monthLabel: MONTHS[m.getMonth()] + ' ' + m.getFullYear(),
       monthCells: cells,
-      prevHk: this.reg(() => this.setState({ month: new Date(m.getFullYear(), m.getMonth() - 1, 1) })),
-      nextHk: this.reg(() => this.setState({ month: new Date(m.getFullYear(), m.getMonth() + 1, 1) })),
+      prevHk: this.reg('cal-prev', () => this.setState({ month: new Date(m.getFullYear(), m.getMonth() - 1, 1) })),
+      nextHk: this.reg('cal-next', () => this.setState({ month: new Date(m.getFullYear(), m.getMonth() + 1, 1) })),
 
       heatWeeks: weeks, heatMonths: months, heatTotal,
       heatLegend: [0, 1, 2, 3, 4].map(n => ({ style: 'width:11px;height:11px;border-radius:3px;display:inline-block;' + (n === 0 ? 'background:#151a22;border:1px solid #1b202a;' : 'background:color-mix(in srgb, var(--acc) ' + Math.round((0.22 + n * 0.2) * 100) + '%, #0f1218);') })),
@@ -405,35 +419,35 @@ class App {
 
       achievements, achDone: achDefs.filter(a => a[3]).length, achTotal: achDefs.length,
 
-      noopHk: this.reg(() => {}),
+      noopHk: this.reg('noop', () => {}),
       showNew: s.showNew,
-      openNewHk: this.reg(() => { this._formTitle = ''; this._focusTitle = true; this._guardUntil = Date.now() + 400; this.setState({ showNew: true, formTitle: '' }); }),
-      closeNewHk: this.reg(() => this.setState({ showNew: false })),
-      backdropCloseNewHk: this.reg(() => { if (Date.now() < (this._guardUntil || 0)) return; this.setState({ showNew: false }); }),
+      openNewHk: this.reg('open-new', () => { this._formTitle = ''; this._focusTitle = true; this._guardUntil = Date.now() + 400; this.setState({ showNew: true, formTitle: '' }); }),
+      closeNewHk: this.reg('close-new', () => this.setState({ showNew: false })),
+      backdropCloseNewHk: this.reg('backdrop-close-new', () => { if (Date.now() < (this._guardUntil || 0)) return; this.setState({ showNew: false }); }),
       formN: s.formN,
       catOptions: CAT_ORDER.map(c => {
         const col = CATS[c].color, on = s.formCat === c;
-        return { name: CATS[c].name, icon: CATS[c].icon, hk: this.reg(() => this.setState({ formCat: c })),
+        return { name: CATS[c].name, icon: CATS[c].icon, hk: this.reg('cat:' + c, () => this.setState({ formCat: c })),
           style: 'display:flex;flex-direction:column;align-items:center;gap:5px;padding:11px 4px;border-radius:12px;background:' +
             (on ? tint(col, 0.13) : '#0f1218') + ';border:1px solid ' + (on ? tint(col, 0.5) : '#242a35') + ';color:' + (on ? col : '#7c8598') + ';' +
             (on ? 'box-shadow:0 0 24px -14px ' + col + ';' : '') };
       }),
       xpOptions: XP_OPTS.map(([xp, label]) => ({
-        xp, label, hk: this.reg(() => this.setState({ formXp: xp })),
+        xp, label, hk: this.reg('xp:' + xp, () => this.setState({ formXp: xp })),
         style: 'padding:12px 6px;border-radius:12px;display:flex;flex-direction:column;gap:3px;align-items:center;background:' +
           (s.formXp === xp ? 'var(--acc-t12)' : '#0f1218') + ';border:1px solid ' + (s.formXp === xp ? 'var(--acc-t45)' : '#242a35') +
           ';color:' + (s.formXp === xp ? 'var(--acc-text)' : '#7c8598') + ';' + (s.formXp === xp ? 'box-shadow:0 0 22px -12px var(--acc-glow);' : '') })),
-      repeatOptions: repeatDefs.map(([id, label]) => ({ label, hk: this.reg(() => this.setState({ formRepeat: id })), style: segBase + (s.formRepeat === id ? 'background:var(--acc-t12);border-color:var(--acc-t45);color:var(--acc-text);' : '') })),
+      repeatOptions: repeatDefs.map(([id, label]) => ({ label, hk: this.reg('repeat:' + id, () => this.setState({ formRepeat: id })), style: segBase + (s.formRepeat === id ? 'background:var(--acc-t12);border-color:var(--acc-t45);color:var(--acc-text);' : '') })),
       showDayPicker: s.formRepeat === 'weekdays', showNPicker: s.formRepeat === 'everyN', showOnceNote: s.formRepeat === 'once',
       dateShort: s.today.getDate() + ' ' + MONTHS_GEN[s.today.getMonth()],
       dayToggles: [1, 2, 3, 4, 5, 6, 0].map(i => ({
-        name: WD[i], hk: this.reg(() => this.setState(st2 => ({ formDays: st2.formDays.includes(i) ? st2.formDays.filter(x => x !== i) : [...st2.formDays, i] }))),
+        name: WD[i], hk: this.reg('dow:' + i, () => this.setState(st2 => ({ formDays: st2.formDays.includes(i) ? st2.formDays.filter(x => x !== i) : [...st2.formDays, i] }))),
         style: 'flex:1;padding:9px 0;border-radius:10px;font-size:11px;font-weight:700;background:' +
           (s.formDays.includes(i) ? 'var(--acc-t12)' : 'transparent') + ';border:1px solid ' + (s.formDays.includes(i) ? 'var(--acc-t45)' : '#242a35') +
           ';color:' + (s.formDays.includes(i) ? 'var(--acc-text)' : '#7c8598') + ';' })),
-      incHk: this.reg(() => this.setState(st2 => ({ formN: Math.min(30, st2.formN + 1) }))),
-      decHk: this.reg(() => this.setState(st2 => ({ formN: Math.max(2, st2.formN - 1) }))),
-      createHk: this.reg(() => {
+      incHk: this.reg('n-inc', () => this.setState(st2 => ({ formN: Math.min(30, st2.formN + 1) }))),
+      decHk: this.reg('n-dec', () => this.setState(st2 => ({ formN: Math.max(2, st2.formN - 1) }))),
+      createHk: this.reg('create-quest', () => {
         const title = (this._formTitle && this._formTitle.trim()) || 'Новый квест';
         const q = { id: s.nextId, title, xp: s.formXp, type: s.formRepeat, days: s.formDays, n: s.formN, start: tk, date: tk, cat: s.formCat };
         this.state.quests = [...s.quests, q]; this.state.nextId = s.nextId + 1; this.state.showNew = false; this.state.formTitle = '';
@@ -441,8 +455,8 @@ class App {
         this.pushToast('🎯', 'Квест добавлен', title + ' · +' + s.formXp + ' XP');
       }),
 
-      showDay: !!dk, closeDayHk: this.reg(() => this.setState({ dayKey: null })),
-      backdropCloseDayHk: this.reg(() => { if (Date.now() < (this._guardUntil || 0)) return; this.setState({ dayKey: null }); }),
+      showDay: !!dk, closeDayHk: this.reg('close-day', () => this.setState({ dayKey: null })),
+      backdropCloseDayHk: this.reg('backdrop-close-day', () => { if (Date.now() < (this._guardUntil || 0)) return; this.setState({ dayKey: null }); }),
       dayTitle: dayDate ? dayDate.getDate() + ' ' + MONTHS_GEN[dayDate.getMonth()] + ' ' + dayDate.getFullYear() : '',
       dayWeekday: dayDate ? WD_FULL[dayDate.getDay()] : '',
       dayQuests: dayList.map(q => mkRow(q, dk, dayDone)),
@@ -452,14 +466,14 @@ class App {
       confetti: s.confetti.map(c => ({ style: 'position:absolute;top:0;left:' + c.left + '%;width:' + c.size + 'px;height:' + c.size * 1.6 + 'px;border-radius:2px;background:' + c.color + ';animation:conf ' + c.dur + 's ease-in ' + c.delay + 's forwards;' })),
 
       accentIsGold: s.accent === 'gold',
-      toggleAccentHk: this.reg(() => { this.state.accent = s.accent === 'gold' ? 'blue' : 'gold'; this.applyAccent(); this.persist(); this.render(); })
+      toggleAccentHk: this.reg('toggle-accent', () => { this.state.accent = s.accent === 'gold' ? 'blue' : 'gold'; this.applyAccent(); this.persist(); this.render(); })
     };
   }
 
-  reg(fn){ this._handlers.push(fn); return this._handlers.length - 1; }
+  reg(key, fn){ this._handlers[key] = fn; return key; }
 
   render(){
-    this._handlers = [];
+    this._handlers = {};
     const v = this.computeVals();
     this.root.innerHTML = this.buildHTML(v);
     this.applyAccent();
@@ -569,7 +583,7 @@ class App {
         </div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:8px">${v.weekdayNames.map(n => `<div style="text-align:center;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#5f6879">${n}</div>`).join('')}</div>
-      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px">${v.monthCells.map(c => `<div ${c.hk>=0?`data-hk="${c.hk}"`:''} style="${c.style}"><div style="${c.numStyle}">${c.label}</div><div style="display:flex;flex-wrap:wrap;gap:4px;align-content:flex-start">${c.dots.map(d => `<i style="${d.style}"></i>`).join('')}</div></div>`).join('')}</div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px">${v.monthCells.map(c => `<div ${c.hk!==-1?`data-hk="${c.hk}"`:''} style="${c.style}"><div style="${c.numStyle}">${c.label}</div><div style="display:flex;flex-wrap:wrap;gap:4px;align-content:flex-start">${c.dots.map(d => `<i style="${d.style}"></i>`).join('')}</div></div>`).join('')}</div>
     </div>`;
 
     const statsView = `<div style="display:flex;flex-direction:column;gap:18px">
